@@ -1,8 +1,9 @@
 package com.example.nemus.touchtest;
 
-import android.app.Activity;
+import android.graphics.Matrix;
+import android.graphics.PointF;
+import android.graphics.RectF;
 import android.support.v4.view.PagerAdapter;
-import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -19,6 +20,7 @@ public class ImageAdator extends PagerAdapter {
     LayoutInflater inflater;
     MainActivity main;
     private boolean toggle = true;
+    private boolean toggle2 = true;
 
     public ImageAdator(LayoutInflater layoutInflater, MainActivity act){
         this.inflater = layoutInflater;
@@ -73,20 +75,25 @@ public class ImageAdator extends PagerAdapter {
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 //
                 Log.d("point",motionEvent.getPointerCount()+"");
+
                 if(motionEvent.getPointerCount() == 2) {
+                    int raw[] = getRowPoint(view,motionEvent,1);
+                    int dx = (int) motionEvent.getRawX() - raw[0];
+                    int dy = (int) motionEvent.getRawY() - raw[1];
+                    Log.d("y", (int) motionEvent.getY(0) +"/"+(int) motionEvent.getY(1));
 
-                    pointid[0] = motionEvent.getPointerId(0);
-                    pointid[1] = motionEvent.getPointerId(1);
-
-
-                    int dx = (int) motionEvent.getX(pointid[1]) - (int) motionEvent.getX(pointid[0]);
-                    int dy = (int) motionEvent.getY(pointid[1]) - (int) motionEvent.getY(pointid[0]);
-                    double rad = Math.atan2(dx, dy);
-                    double degree = (rad * 180) / Math.PI;
-                    int base = (int)degree*-1;
+                    double rad = Math.atan2(dy, dx);
+                    double degree = Math.toDegrees(rad);
+                    int base = (int)degree;
 
                     //int deg = base - (int)degree;
                     view.setRotation(base);
+                    /*ImageView iv = (ImageView)view;
+                    Matrix m = iv.getImageMatrix();
+                    RectF drawableRect = new RectF(0, 0, iv.getMaxWidth(), iv.getMaxHeight());
+                    RectF viewRect = new RectF(0, 0, iv.getWidth(), iv.getHeight());
+                    m.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.CENTER);
+                    iv.setImageMatrix(m);*/
                     Log.d("pointdeg", base+"");
                 }
                 CustomDoubletap cd = new CustomDoubletap(view);
@@ -134,6 +141,24 @@ public class ImageAdator extends PagerAdapter {
         return view==object;
     }
 
+    public int[] getRowPoint(View v,MotionEvent ev, int index){
+        final int location[] = { 0, 0 };
+        v.getLocationOnScreen(location);
+
+        float x=ev.getX(index);
+        float y=ev.getY(index);
+
+        double angle=Math.toDegrees(Math.atan2(y, x));
+        angle+=v.getRotation();
+
+        final float length=PointF.length(x,y);
+
+        x=(float)(length*Math.cos(Math.toRadians(angle)))+location[0];
+        y=(float)(length*Math.sin(Math.toRadians(angle)))+location[1];
+
+        return new int[]{(int)x,(int)y};
+    }
+
     class CustomDoubletap implements GestureDetector.OnDoubleTapListener{
         View view;
         int[] loc = new int[]{0,0};
@@ -160,11 +185,11 @@ public class ImageAdator extends PagerAdapter {
                 Log.d("doubletab",toggle+"");
                 Log.d("x",x-loc[0]+"");
                 Log.d("y",y-loc[1]+"");
-                view.animate().scaleX(2.0f).scaleY(2.0f).translationX(520-(x-loc[0])).translationY(900-(y-loc[1])).setDuration(500);
+                view.animate().rotation(0).scaleX(2.0f).scaleY(2.0f).translationX(520-(x-loc[0])).translationY(900-(y-loc[1])).setDuration(500);
                 toggle = false;
             }else{
                 Log.d("doubletab",toggle+"");
-                view.animate().scaleX(1.0f).scaleY(1.0f).translationX(0).translationY(0).setDuration(500);
+                view.animate().rotation(0).scaleX(1.0f).scaleY(1.0f).translationX(0).translationY(0).setDuration(500);
                 toggle = true;
             }
             return true;
