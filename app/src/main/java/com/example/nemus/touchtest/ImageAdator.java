@@ -34,6 +34,7 @@ public class ImageAdator extends PagerAdapter {
     private boolean toggle = true;
     private float baseLength = 0;
     private int deg =0;
+    private int[] center = new int[2];
     float[] originalScale = new float[]{0,0};
 
     public ImageAdator(LayoutInflater layoutInflater, MainActivity act){
@@ -91,7 +92,7 @@ public class ImageAdator extends PagerAdapter {
                 if(motionEvent.getAction()==MotionEvent.ACTION_UP){
                     deg =0;
                     toggle=true;
-                    baseLength=0;
+                    baseLength=0f;
                 }
 
                 Log.d("point",motionEvent.getPointerCount()+"");
@@ -102,36 +103,39 @@ public class ImageAdator extends PagerAdapter {
                     int dx = (int) motionEvent.getRawX() - raw[0];
                     int dy = (int) motionEvent.getRawY() - raw[1];
                     Log.d("y", (int) motionEvent.getY(0) +"/"+(int) motionEvent.getY(1));
-
                     double rad = Math.atan2(dy, dx);
                     double degree = Math.toDegrees(rad);
+
+                    float vLength = (float)Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
+
+                    if(toggle){
+                        baseLength = vLength;
+                        deg = (int)degree;
+                        toggle=false;
+                        center[0] = raw[0]+dx/2;
+                        center[1] = raw[1]+dy/2;
+                    }
+
                     int base = (int)degree-deg;
                     deg = (int)degree;
                     ImageView iv = (ImageView)view;
 
                     Matrix matrix = iv.getImageMatrix();
                     float[] value = new float[9];
+                    matrix.getValues(value);
 
-                    if(toggle){
-                        baseLength = (float)Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
-                        toggle=false;
-                    }
-                    float vLength = (float)Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
                     float sc = vLength/baseLength;
+                    baseLength = vLength;
+                    //sc = (float) Math.sqrt(sc);
                     Log.d("scale",sc+"");
 
-                    matrix.postRotate(base, view.getWidth()/2,view.getHeight()/2);
-                    matrix.postScale(sc,sc,view.getWidth()/2,view.getHeight()/2);
+                    matrix.postRotate(base, center[0],center[1]);
+                    matrix.postScale(sc,sc,center[0],center[1]);
 
                     matrix.getValues(value);
 
-
-
                     iv.setImageMatrix(matrix);
                     iv.invalidate();
-                    //int deg = base - (int)degree;
-                    //view.setRotation(base);
-
 
                     Log.d("pointdeg", base+"");
                     Log.d("deg",imageView.getRotation()+"");
@@ -274,8 +278,8 @@ public class ImageAdator extends PagerAdapter {
                             (targetY * t)
                         }*/
 
-                        matrix.postRotate(0);
-                        matrix.postScale(0.4f,0.4f);
+                        matrix.setRotate(0);
+                        //matrix.postScale(0.4f,0.4f);
                         /*matrix.setScale(ft[0]+(targetX * t) , ft[4]+(targetY * t),motionEvent.getRawX()-(actW/2),motionEvent.getRawY()-(actH/2));
                         matrix.postTranslate(motionEvent.getRawX()-(actW/2),motionEvent.getRawY()-(actH/2));*/
                         //matrix.setTranslate(motionEvent.getRawX()-(actW/2),motionEvent.getRawY()-(actH/2));
