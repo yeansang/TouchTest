@@ -1,15 +1,21 @@
 package com.example.nemus.touchtest;
 
+import android.graphics.Bitmap;
 import android.graphics.Matrix;
+import android.graphics.Point;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.support.v4.view.PagerAdapter;
 import android.util.Log;
+import android.view.Display;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.Interpolator;
@@ -24,8 +30,11 @@ public class ImageAdator extends PagerAdapter {
 
     LayoutInflater inflater;
     MainActivity main;
+    private boolean zoomToggle = true;
     private boolean toggle = true;
-    private boolean toggle2 = true;
+    private float baseLength = 0;
+    private int deg =0;
+    float[] originalScale = new float[]{0,0};
 
     public ImageAdator(LayoutInflater layoutInflater, MainActivity act){
         this.inflater = layoutInflater;
@@ -37,7 +46,7 @@ public class ImageAdator extends PagerAdapter {
 
         View view = inflater.inflate(R.layout.pager_imageview,null);
 
-        ImageView imageView = (ImageView)view.findViewById(R.id.imageview);
+        final ImageView imageView = (ImageView)view.findViewById(R.id.imageview);
         imageView.setImageResource(R.drawable.image1+position);
 
 
@@ -78,10 +87,17 @@ public class ImageAdator extends PagerAdapter {
             private int[] pointid = new int[2];
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                //
+
+                if(motionEvent.getAction()==MotionEvent.ACTION_UP){
+                    deg =0;
+                    toggle=true;
+                    baseLength=0;
+                }
+
                 Log.d("point",motionEvent.getPointerCount()+"");
 
                 if(motionEvent.getPointerCount() == 2) {
+
                     int raw[] = getRowPoint(view,motionEvent,1);
                     int dx = (int) motionEvent.getRawX() - raw[0];
                     int dy = (int) motionEvent.getRawY() - raw[1];
@@ -89,16 +105,47 @@ public class ImageAdator extends PagerAdapter {
 
                     double rad = Math.atan2(dy, dx);
                     double degree = Math.toDegrees(rad);
-                    int base = (int)degree;
+                    int base = (int)degree-deg;
+                    deg = (int)degree;
+                    ImageView iv = (ImageView)view;
 
+                    Matrix matrix = iv.getImageMatrix();
+                    float[] value = new float[9];
+
+                    if(toggle){
+                        baseLength = (float)Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
+                        toggle=false;
+                    }
+                    float vLength = (float)Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
+                    float sc = vLength/baseLength;
+                    Log.d("scale",sc+"");
+
+                    matrix.postRotate(base, view.getWidth()/2,view.getHeight()/2);
+                    matrix.postScale(sc,sc,view.getWidth()/2,view.getHeight()/2);
+
+                    matrix.getValues(value);
+
+
+
+                    iv.setImageMatrix(matrix);
+                    iv.invalidate();
                     //int deg = base - (int)degree;
-                    view.setRotation(base);
+                    //view.setRotation(base);
+
 
                     Log.d("pointdeg", base+"");
+                    Log.d("deg",imageView.getRotation()+"");
+                    Log.e("Value", "value X : "+value[0]+"/"+value[1]+"/"+value[2]);
+                    Log.e("Value", "value Y : "+value[3]+"/"+value[4]+"/"+value[5]);
+                    Log.e("Value", "value per : "+value[6]+"/"+value[7]+"/"+value[8]);
                 }
+
                 CustomDoubletap cd = new CustomDoubletap(view);
                 gestureDetector.setOnDoubleTapListener(cd);
                 gestureDetector.onTouchEvent(motionEvent);
+
+                Log.d("touch",motionEvent.getX()+"/"+motionEvent.getY());
+
                 return true;
             }
         });
@@ -110,6 +157,7 @@ public class ImageAdator extends PagerAdapter {
 
     @Override
     public CharSequence getPageTitle(int pos){
+
         switch (pos){
             case 0:
                 return "아이유";
@@ -159,19 +207,21 @@ public class ImageAdator extends PagerAdapter {
         return new int[]{(int)x,(int)y};
     }
 
-    class ZoomAnim extends Animation {
-        public void initialize(int width, int height, int parentWidth, int parentHeight) {
-            super.initialize(width, height, parentWidth, parentHeight);
-            setDuration(500);         // 지속시간
-            setInterpolator(new LinearInterpolator());    // 일정하게
-        }
+    public int[] getWindowSize(){
+        Display dp = main.getWindowManager().getDefaultDisplay();
+        Point p = new Point();
+        dp.getSize(p);
+        return new int[]{p.x,p.y};
+    }
 
-        protected void applyTransformation(float interpolatedTime, Transformation t) {
-            Matrix matrix = t.getMatrix();
-            //matrix.postScale(0.4f*interpolatedTime,0.4f*interpolatedTime,545.0f,912.0f);
-            matrix.setScale(2.0f*interpolatedTime,2.0f*interpolatedTime,545.0f,912.0f);
-            //matrix.setSkew(2.0f * interpolatedTime, 0);    // 기울기 * 시간
-        }
+    public int[] getRealImageSize(ImageView imageView){
+        Matrix matrix = imageView.getImageMatrix();
+        final Drawable d = imageView.getDrawable();
+        final float[] ft = new float[9];
+        matrix.getValues(ft);
+        final int actW = Math.round(d.getIntrinsicWidth() * ft[Matrix.MSCALE_X]);
+        final int actH = Math.round(d.getIntrinsicHeight() * ft[Matrix.MSCALE_Y]);
+        return new int[]{actW,actH};
     }
 
     class CustomDoubletap implements GestureDetector.OnDoubleTapListener{
@@ -191,28 +241,57 @@ public class ImageAdator extends PagerAdapter {
         }
 
         @Override
-        public boolean onDoubleTap(MotionEvent motionEvent) {
-            Log.d("doubletab","tab");
-            float x = motionEvent.getX();
-            float y = motionEvent.getY();
+        public boolean onDoubleTap(final MotionEvent motionEvent) {
+            final Matrix matrix = imageView.getImageMatrix();
+            final long startTime = System.currentTimeMillis();
+            final long duration = 1000;
+            final float[] ft = new float[9];
 
-            if(toggle) {
-                Log.d("doubletab",toggle+"");
-                Log.d("x",x-loc[0]+"");
-                Log.d("y",y-loc[1]+"");
-                imageView.animate().scaleXBy(2.0f).scaleYBy(2.0f).setDuration(1000);
-                /*Matrix im = imageView.getImageMatrix();
-                im.postScale(5.0f,5.0f,motionEvent.getRawX(),motionEvent.getRawY());
-                imageView.setImageMatrix(im);
-                imageView.invalidate();*/
-                //imageView.startAnimation(new ZoomAnim());
-                toggle = false;
-            }else{
-                Log.d("doubletab",toggle+"");
-                //imageView.startAnimation(new ZoomAnim());
-                toggle = true;
-            }
-            return true;
+            matrix.getValues(ft);
+
+            final int[] act = getRealImageSize(imageView);
+
+            final float targetX = 1 - ft[0];
+            final float targetY = 1 - ft[4];
+
+            final int actW = act[0];
+            final int actH = act[1];
+
+
+            imageView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        float t = (float) (System.currentTimeMillis() - startTime) / duration;
+                        t = t > 1.0f ? 1.0f : t;
+                        Log.d("double", t + "");
+
+                        int[] size = getWindowSize();
+
+                        Log.d("drawx", targetX * t + "");
+                        Log.d("drawy", targetY * t + "");
+                        /*if(zoomToggle){
+                            (targetX * t)
+                            (targetY * t)
+                        }*/
+
+                        matrix.postRotate(0);
+                        matrix.postScale(0.4f,0.4f);
+                        /*matrix.setScale(ft[0]+(targetX * t) , ft[4]+(targetY * t),motionEvent.getRawX()-(actW/2),motionEvent.getRawY()-(actH/2));
+                        matrix.postTranslate(motionEvent.getRawX()-(actW/2),motionEvent.getRawY()-(actH/2));*/
+                        //matrix.setTranslate(motionEvent.getRawX()-(actW/2),motionEvent.getRawY()-(actH/2));
+
+                        Log.d("width,height",ft[2]+"/"+ft[5]);
+                        imageView.setImageMatrix(matrix);
+                        imageView.invalidate();
+                        if (t < 1f) {
+                            imageView.post(this);
+                            zoomToggle = !zoomToggle;
+                        }
+                    }
+                });
+
+
+            return false;
         }
 
         @Override
