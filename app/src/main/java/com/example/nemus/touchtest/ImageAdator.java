@@ -10,6 +10,11 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.Animation;
+import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.Transformation;
 import android.widget.ImageView;
 
 /**
@@ -88,12 +93,7 @@ public class ImageAdator extends PagerAdapter {
 
                     //int deg = base - (int)degree;
                     view.setRotation(base);
-                    /*ImageView iv = (ImageView)view;
-                    Matrix m = iv.getImageMatrix();
-                    RectF drawableRect = new RectF(0, 0, iv.getMaxWidth(), iv.getMaxHeight());
-                    RectF viewRect = new RectF(0, 0, iv.getWidth(), iv.getHeight());
-                    m.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.CENTER);
-                    iv.setImageMatrix(m);*/
+
                     Log.d("pointdeg", base+"");
                 }
                 CustomDoubletap cd = new CustomDoubletap(view);
@@ -159,12 +159,27 @@ public class ImageAdator extends PagerAdapter {
         return new int[]{(int)x,(int)y};
     }
 
+    class ZoomAnim extends Animation {
+        public void initialize(int width, int height, int parentWidth, int parentHeight) {
+            super.initialize(width, height, parentWidth, parentHeight);
+            setDuration(500);         // 지속시간
+            setInterpolator(new LinearInterpolator());    // 일정하게
+        }
+
+        protected void applyTransformation(float interpolatedTime, Transformation t) {
+            Matrix matrix = t.getMatrix();
+            //matrix.postScale(0.4f*interpolatedTime,0.4f*interpolatedTime,545.0f,912.0f);
+            matrix.setScale(2.0f*interpolatedTime,2.0f*interpolatedTime,545.0f,912.0f);
+            //matrix.setSkew(2.0f * interpolatedTime, 0);    // 기울기 * 시간
+        }
+    }
+
     class CustomDoubletap implements GestureDetector.OnDoubleTapListener{
-        View view;
+        ImageView imageView;
         int[] loc = new int[]{0,0};
 
         CustomDoubletap(View view){
-            this.view = view;
+            this.imageView = (ImageView)view;
             view.getLocationOnScreen(loc);
         }
 
@@ -185,11 +200,16 @@ public class ImageAdator extends PagerAdapter {
                 Log.d("doubletab",toggle+"");
                 Log.d("x",x-loc[0]+"");
                 Log.d("y",y-loc[1]+"");
-                view.animate().rotation(0).scaleX(2.0f).scaleY(2.0f).translationX(520-(x-loc[0])).translationY(900-(y-loc[1])).setDuration(500);
+                imageView.animate().scaleXBy(2.0f).scaleYBy(2.0f).setDuration(1000);
+                /*Matrix im = imageView.getImageMatrix();
+                im.postScale(5.0f,5.0f,motionEvent.getRawX(),motionEvent.getRawY());
+                imageView.setImageMatrix(im);
+                imageView.invalidate();*/
+                //imageView.startAnimation(new ZoomAnim());
                 toggle = false;
             }else{
                 Log.d("doubletab",toggle+"");
-                view.animate().rotation(0).scaleX(1.0f).scaleY(1.0f).translationX(0).translationY(0).setDuration(500);
+                //imageView.startAnimation(new ZoomAnim());
                 toggle = true;
             }
             return true;
