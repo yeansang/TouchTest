@@ -36,6 +36,7 @@ public class ImageAdator extends PagerAdapter {
     private int deg =0;
     private int[] center = new int[2];
     float[] originalScale = new float[]{0,0};
+    float bx,by = 0;
 
     public ImageAdator(LayoutInflater layoutInflater, MainActivity act){
         this.inflater = layoutInflater;
@@ -95,10 +96,10 @@ public class ImageAdator extends PagerAdapter {
                     baseLength=0f;
                 }
 
-                Log.d("point",motionEvent.getPointerCount()+"");
+
 
                 if(motionEvent.getPointerCount() == 2) {
-
+                    Log.d("point",motionEvent.getPointerCount()+"");
                     int raw[] = getRowPoint(view,motionEvent,1);
                     int dx = (int) motionEvent.getRawX() - raw[0];
                     int dy = (int) motionEvent.getRawY() - raw[1];
@@ -142,7 +143,28 @@ public class ImageAdator extends PagerAdapter {
                     Log.e("Value", "value X : "+value[0]+"/"+value[1]+"/"+value[2]);
                     Log.e("Value", "value Y : "+value[3]+"/"+value[4]+"/"+value[5]);
                     Log.e("Value", "value per : "+value[6]+"/"+value[7]+"/"+value[8]);
+                    return true;
                 }
+
+                if(motionEvent.getPointerCount() < 2) {
+                    Log.d("test","test");
+                    ImageView iv2 = (ImageView) view;
+                    Matrix matrix2 = iv2.getImageMatrix();
+                    float[] fl = new float[9];
+                    matrix2.getValues(fl);
+                    Log.e("Value", "value X : "+fl[0]+"/"+fl[1]+"/"+fl[2]);
+                    Log.e("Value", "value Y : "+fl[3]+"/"+fl[4]+"/"+fl[5]);
+                    Log.e("Value", "value per : "+fl[6]+"/"+fl[7]+"/"+fl[8]);
+                    float x = (motionEvent.getX()-fl[Matrix.MTRANS_X]) - bx;
+                    float y = (motionEvent.getY()-fl[Matrix.MTRANS_Y]) - by;
+                    Log.d("tran",x+"/"+y);
+                    matrix2.setTranslate(x, y);
+                    bx = motionEvent.getX()-fl[Matrix.MTRANS_X];
+                    by = motionEvent.getY()-fl[Matrix.MTRANS_Y];
+                    iv2.setImageMatrix(matrix2);
+                    iv2.invalidate();
+                }
+
 
                 CustomDoubletap cd = new CustomDoubletap(view);
                 gestureDetector.setOnDoubleTapListener(cd);
