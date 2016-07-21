@@ -96,8 +96,6 @@ public class ImageAdator extends PagerAdapter {
                     baseLength=0f;
                 }
 
-
-
                 if(motionEvent.getPointerCount() == 2) {
                     Log.d("point",motionEvent.getPointerCount()+"");
                     int raw[] = getRowPoint(view,motionEvent,1);
@@ -155,12 +153,13 @@ public class ImageAdator extends PagerAdapter {
                     Log.e("Value", "value X : "+fl[0]+"/"+fl[1]+"/"+fl[2]);
                     Log.e("Value", "value Y : "+fl[3]+"/"+fl[4]+"/"+fl[5]);
                     Log.e("Value", "value per : "+fl[6]+"/"+fl[7]+"/"+fl[8]);
-                    float x = (motionEvent.getX()-fl[Matrix.MTRANS_X]) - bx;
-                    float y = (motionEvent.getY()-fl[Matrix.MTRANS_Y]) - by;
+                    int[] fp = getRealImageSize(iv2);
+                    float x = (motionEvent.getX()-fp[0]/2) - bx;
+                    float y = (motionEvent.getY()-fp[1]/2) - by;
                     Log.d("tran",x+"/"+y);
-                    matrix2.setTranslate(x, y);
-                    bx = motionEvent.getX()-fl[Matrix.MTRANS_X];
-                    by = motionEvent.getY()-fl[Matrix.MTRANS_Y];
+                    matrix2.postTranslate(x, y);
+                    bx = motionEvent.getX()-fp[0]/2;
+                    by = motionEvent.getY()-fp[1]/2;
                     iv2.setImageMatrix(matrix2);
                     iv2.invalidate();
                 }
@@ -283,7 +282,6 @@ public class ImageAdator extends PagerAdapter {
             final int actW = act[0];
             final int actH = act[1];
 
-
             imageView.post(new Runnable() {
                     @Override
                     public void run() {
@@ -292,13 +290,13 @@ public class ImageAdator extends PagerAdapter {
                         Log.d("double", t + "");
 
                         int[] size = getWindowSize();
+                        float scale = 1.0f;
 
                         Log.d("drawx", targetX * t + "");
                         Log.d("drawy", targetY * t + "");
-                        /*if(zoomToggle){
-                            (targetX * t)
-                            (targetY * t)
-                        }*/
+                        if(zoomToggle){
+                            scale = originalScale[0];
+                        }
 
                         matrix.setRotate(0);
                         //matrix.postScale(0.4f,0.4f);
