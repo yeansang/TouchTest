@@ -15,12 +15,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.Animation;
-import android.view.animation.Interpolator;
-import android.view.animation.LinearInterpolator;
-import android.view.animation.Transformation;
 import android.widget.ImageView;
 
 /**
@@ -30,13 +24,30 @@ public class ImageAdator extends PagerAdapter {
 
     LayoutInflater inflater;
     MainActivity main;
-    private boolean zoomToggle = true;
+    private boolean zoomToggle = false;
     private boolean toggle = true;
     private float baseLength = 0;
     private int deg =0;
     private int[] center = new int[2];
     float[] originalScale = new float[]{0,0};
     float bx,by = 0;
+
+    private Matrix matrix = new Matrix();
+    private Matrix savedMatrix = new Matrix();
+    private Matrix originMatrix = new Matrix();
+
+    private static final int NONE = 0;
+    private static final int DRAG = 1;
+    private static final int ZOOM = 2;
+    private int mode = NONE;
+
+    private PointF start = new PointF();
+    private PointF mid = new PointF();
+    private float oldDist = 1f;
+    private float d = 0f;
+    private float newRot = 0f;
+    private float[] lastEvent = null;
+
 
     public ImageAdator(LayoutInflater layoutInflater, MainActivity act){
         this.inflater = layoutInflater;
@@ -56,7 +67,6 @@ public class ImageAdator extends PagerAdapter {
             private GestureDetector gestureDetector = new GestureDetector(main.getApplicationContext(), new GestureDetector.OnGestureListener() {
                 @Override
                 public boolean onDown(MotionEvent motionEvent) {
-
                     return false;
                 }
 
@@ -88,90 +98,120 @@ public class ImageAdator extends PagerAdapter {
             });
             private int[] pointid = new int[2];
             @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
+            public boolean onTouch(View v, MotionEvent event) {
 
-                if(motionEvent.getAction()==MotionEvent.ACTION_UP){
-                    deg =0;
-                    toggle=true;
-                    baseLength=0f;
+                ImageView view = (ImageView) v;
+                matrix = view.getImageMatrix();
+                switch (event.getAction() & MotionEvent.ACTION_MASK) {
+                    case MotionEvent.ACTION_DOWN:
+                        if(toggle){
+                            float[] value = new float[9];
+                            matrix.getValues(value);
+                            originMatrix.setValues(value);
+                            Log.e("Value1", "value X : "+value[0]+"/"+value[1]+"/"+value[2]);
+                            Log.e("Value1", "value Y : "+value[3]+"/"+value[4]+"/"+value[5]);
+                            Log.e("Value1", "value per : "+value[6]+"/"+value[7]+"/"+value[8]);
+                            toggle = false;
+                        }
+                        Log.d("switch","1");
+                        savedMatrix.set(matrix);
+                        start.set(event.getX(), event.getY());
+                        mode = DRAG;
+                        lastEvent = null;
+                        break;
+                    case MotionEvent.ACTION_POINTER_DOWN:
+                        Log.d("switch","2");
+                        oldDist = spacing(event);
+                        if (oldDist > 10f) {
+                            savedMatrix.set(matrix);
+                            midPoint(mid, event);
+                            mode = ZOOM;
+                        }
+                        lastEvent = new float[4];
+                        lastEvent[0] = event.getX(0);
+                        lastEvent[1] = event.getX(1);
+                        lastEvent[2] = event.getY(0);
+                        lastEvent[3] = event.getY(1);
+                        d = rotation(event);
+                        break;
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_POINTER_UP:
+                        Log.d("switch","3");
+                        mode = NONE;
+                        lastEvent = null;
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        zoomToggle = true;
+                        if (mode == DRAG) {
+                            Log.d("switch","4");
+                            matrix.set(savedMatrix);
+                            float dx = event.getX() - start.x;
+                            float dy = event.getY() - start.y;
+                            matrix.postTranslate(dx, dy);
+                        } else if (mode == ZOOM) {
+                            Log.d("switch","5");
+                            float newDist = spacing(event);
+                            if (newDist > 10f) {
+                                Log.d("switch","6");
+                                matrix.set(savedMatrix);
+                                float scale = (newDist / oldDist);
+                                matrix.postScale(scale, scale, mid.x, mid.y);
+                            }
+                            if (lastEvent != null && event.getPointerCount() == 2) {
+                                Log.d("switch","7");
+                                newRot = rotation(event);
+                                float r = newRot - d;
+                                float[] values = new float[9];
+                                matrix.getValues(values);
+                                float tx = values[2];
+                                float ty = values[5];
+                                float sx = values[0];
+                                float xc = (view.getWidth() / 2) * sx;
+                                float yc = (view.getHeight() / 2) * sx;
+                                matrix.postRotate(r, tx + xc, ty + yc);
+                            }
+                        }
+                        break;
                 }
 
-                if(motionEvent.getPointerCount() == 2) {
-                    Log.d("point",motionEvent.getPointerCount()+"");
-                    int raw[] = getRowPoint(view,motionEvent,1);
-                    int dx = (int) motionEvent.getRawX() - raw[0];
-                    int dy = (int) motionEvent.getRawY() - raw[1];
-                    Log.d("y", (int) motionEvent.getY(0) +"/"+(int) motionEvent.getY(1));
-                    double rad = Math.atan2(dy, dx);
-                    double degree = Math.toDegrees(rad);
-
-                    float vLength = (float)Math.sqrt(Math.pow(dx,2)+Math.pow(dy,2));
-
-                    if(toggle){
-                        baseLength = vLength;
-                        deg = (int)degree;
-                        toggle=false;
-                        center[0] = raw[0]+dx/2;
-                        center[1] = raw[1]+dy/2;
-                    }
-
-                    int base = (int)degree-deg;
-                    deg = (int)degree;
-                    ImageView iv = (ImageView)view;
-
-                    Matrix matrix = iv.getImageMatrix();
-                    float[] value = new float[9];
-                    matrix.getValues(value);
-
-                    float sc = vLength/baseLength;
-                    baseLength = vLength;
-                    //sc = (float) Math.sqrt(sc);
-                    Log.d("scale",sc+"");
-
-                    matrix.postRotate(base, center[0],center[1]);
-                    matrix.postScale(sc,sc,center[0],center[1]);
-
-                    matrix.getValues(value);
-
-                    iv.setImageMatrix(matrix);
-                    iv.invalidate();
-
-                    Log.d("pointdeg", base+"");
-                    Log.d("deg",imageView.getRotation()+"");
-                    Log.e("Value", "value X : "+value[0]+"/"+value[1]+"/"+value[2]);
-                    Log.e("Value", "value Y : "+value[3]+"/"+value[4]+"/"+value[5]);
-                    Log.e("Value", "value per : "+value[6]+"/"+value[7]+"/"+value[8]);
-                    return true;
-                }
-
-                if(motionEvent.getPointerCount() < 2) {
-                    Log.d("test","test");
-                    ImageView iv2 = (ImageView) view;
-                    Matrix matrix2 = iv2.getImageMatrix();
-                    float[] fl = new float[9];
-                    matrix2.getValues(fl);
-                    Log.e("Value", "value X : "+fl[0]+"/"+fl[1]+"/"+fl[2]);
-                    Log.e("Value", "value Y : "+fl[3]+"/"+fl[4]+"/"+fl[5]);
-                    Log.e("Value", "value per : "+fl[6]+"/"+fl[7]+"/"+fl[8]);
-                    int[] fp = getRealImageSize(iv2);
-                    float x = (motionEvent.getX()-fp[0]/2) - bx;
-                    float y = (motionEvent.getY()-fp[1]/2) - by;
-                    Log.d("tran",x+"/"+y);
-                    matrix2.postTranslate(x, y);
-                    bx = motionEvent.getX()-fp[0]/2;
-                    by = motionEvent.getY()-fp[1]/2;
-                    iv2.setImageMatrix(matrix2);
-                    iv2.invalidate();
-                }
-
+                view.setImageMatrix(matrix);
+                view.invalidate();
 
                 CustomDoubletap cd = new CustomDoubletap(view);
                 gestureDetector.setOnDoubleTapListener(cd);
-                gestureDetector.onTouchEvent(motionEvent);
+                gestureDetector.onTouchEvent(event);
 
-                Log.d("touch",motionEvent.getX()+"/"+motionEvent.getY());
+                Log.d("touch",event.getX()+"/"+event.getY());
 
                 return true;
+            }
+
+            private float spacing(MotionEvent event) {
+                float x = event.getX(0) - event.getX(1);
+                float y = event.getY(0) - event.getY(1);
+                return (float)Math.sqrt(x * x + y * y);
+            }
+
+            /**
+             * Calculate the mid point of the first two fingers
+             */
+            private void midPoint(PointF point, MotionEvent event) {
+                float x = event.getX(0) + event.getX(1);
+                float y = event.getY(0) + event.getY(1);
+                point.set(x / 2, y / 2);
+            }
+
+            /**
+             * Calculate the degree to be rotated by.
+             *
+             * @param event
+             * @return Degrees
+             */
+            private float rotation(MotionEvent event) {
+                double delta_x = (event.getX(0) - event.getX(1));
+                double delta_y = (event.getY(0) - event.getY(1));
+                double radians = Math.atan2(delta_y, delta_x);
+                return (float) Math.toDegrees(radians);
             }
         });
 
@@ -182,7 +222,7 @@ public class ImageAdator extends PagerAdapter {
 
     @Override
     public CharSequence getPageTitle(int pos){
-
+        toggle = true;
         switch (pos){
             case 0:
                 return "아이유";
@@ -249,6 +289,28 @@ public class ImageAdator extends PagerAdapter {
         return new int[]{actW,actH};
     }
 
+    public Matrix matrixAni(Matrix from, Matrix to, float timeFlow){
+        float[] value1 = new float[9];
+        float[] value2 = new float[9];
+        to.getValues(value1);
+        from.getValues(value2);
+
+        float[] value = new float[9];
+
+        for(int i=0;i<9;i++){
+            value[i] = value1[i]-value2[i];
+        }
+        float[] ft = new float[9];
+
+        for (int i = 0; i < 9; i++) {
+            ft[i] = value2[i] + value[i] * timeFlow;
+        }
+        Matrix out = new Matrix();
+        out.setValues(ft);
+
+        return out;
+    }
+
     class CustomDoubletap implements GestureDetector.OnDoubleTapListener{
         ImageView imageView;
         int[] loc = new int[]{0,0};
@@ -270,50 +332,67 @@ public class ImageAdator extends PagerAdapter {
             final Matrix matrix = imageView.getImageMatrix();
             final long startTime = System.currentTimeMillis();
             final long duration = 1000;
-            final float[] ft = new float[9];
 
-            matrix.getValues(ft);
+            final float[] value1 = new float[9];
+            final float[] value2 = new float[9];
+            originMatrix.getValues(value1);
+            matrix.getValues(value2);
 
-            final int[] act = getRealImageSize(imageView);
+            final float[] value = new float[9];
 
-            final float targetX = 1 - ft[0];
-            final float targetY = 1 - ft[4];
+            for(int i=0;i<9;i++){
+                value[i] = value1[i]-value2[i];
+            }
 
-            final int actW = act[0];
-            final int actH = act[1];
+            if(zoomToggle) {
+                imageView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        float t = (float) (System.currentTimeMillis() - startTime) / duration;
+                        t = t > 1.0f ? 1.0f : t;
+                        Log.d("double", t + "");
+                        float[] ft = new float[9];
 
-            imageView.post(new Runnable() {
+                        for (int i = 0; i < 9; i++) {
+                            ft[i] = value2[i] + value[i] * t;
+                        }
+
+                        Log.e("Value", "value X : " + value[0] + "/" + value[1] + "/" + value[2]);
+                        Log.e("Value", "value Y : " + value[3] + "/" + value[4] + "/" + value[5]);
+                        Log.e("Value", "value per : " + value[6] + "/" + value[7] + "/" + value[8]);
+
+                        matrix.setValues(ft);
+
+                        imageView.setImageMatrix(matrix);
+                        imageView.invalidate();
+                        if (t < 1f) {
+                            imageView.post(this);
+                            zoomToggle = false;
+                        }
+                    }
+                });
+            }else{
+                imageView.post(new Runnable() {
                     @Override
                     public void run() {
                         float t = (float) (System.currentTimeMillis() - startTime) / duration;
                         t = t > 1.0f ? 1.0f : t;
                         Log.d("double", t + "");
 
+                        Log.d("zoom", zoomToggle + "");
+                        float ft = 1.0f - value2[0];
                         int[] size = getWindowSize();
-                        float scale = 1.0f;
+                        matrix.setScale(t, t, motionEvent.getRawX(), motionEvent.getRawY());
 
-                        Log.d("drawx", targetX * t + "");
-                        Log.d("drawy", targetY * t + "");
-                        if(zoomToggle){
-                            scale = originalScale[0];
-                        }
-
-                        matrix.setRotate(0);
-                        //matrix.postScale(0.4f,0.4f);
-                        /*matrix.setScale(ft[0]+(targetX * t) , ft[4]+(targetY * t),motionEvent.getRawX()-(actW/2),motionEvent.getRawY()-(actH/2));
-                        matrix.postTranslate(motionEvent.getRawX()-(actW/2),motionEvent.getRawY()-(actH/2));*/
-                        //matrix.setTranslate(motionEvent.getRawX()-(actW/2),motionEvent.getRawY()-(actH/2));
-
-                        Log.d("width,height",ft[2]+"/"+ft[5]);
                         imageView.setImageMatrix(matrix);
                         imageView.invalidate();
                         if (t < 1f) {
                             imageView.post(this);
-                            zoomToggle = !zoomToggle;
+                            zoomToggle =true;
                         }
                     }
                 });
-
+            }
 
             return false;
         }
