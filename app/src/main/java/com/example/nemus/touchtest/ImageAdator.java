@@ -141,7 +141,7 @@ public class ImageAdator extends PagerAdapter {
                         lastEvent = null;
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        //zoomToggle = true;
+                        zoomToggle = true;
                         if (mode == DRAG) {
                             Log.d("switch","4");
                             matrix.set(savedMatrix);
@@ -168,7 +168,7 @@ public class ImageAdator extends PagerAdapter {
                                 float sx = values[0];
                                 float xc = (view.getWidth() / 2) * sx;
                                 float yc = (view.getHeight() / 2) * sx;
-                                matrix.postRotate(r, tx + xc, ty + yc);
+                                matrix.postRotate(r, mid.x, mid.y);
                             }
                         }
                         break;
