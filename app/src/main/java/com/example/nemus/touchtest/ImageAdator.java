@@ -141,7 +141,7 @@ public class ImageAdator extends PagerAdapter {
                         lastEvent = null;
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        zoomToggle = true;
+                        //zoomToggle = true;
                         if (mode == DRAG) {
                             Log.d("switch","4");
                             matrix.set(savedMatrix);
@@ -289,11 +289,9 @@ public class ImageAdator extends PagerAdapter {
         return new int[]{actW,actH};
     }
 
-    public Matrix matrixAni(Matrix from, Matrix to, float timeFlow){
-        float[] value1 = new float[9];
-        float[] value2 = new float[9];
-        to.getValues(value1);
-        from.getValues(value2);
+    public Matrix matrixAni(float[] from,float[] to, float timeFlow){
+        float[] value1 = to;
+        float[] value2 = from;
 
         float[] value = new float[9];
 
@@ -331,12 +329,36 @@ public class ImageAdator extends PagerAdapter {
         public boolean onDoubleTap(final MotionEvent motionEvent) {
             final Matrix matrix = imageView.getImageMatrix();
             final long startTime = System.currentTimeMillis();
-            final long duration = 1000;
+            final long duration = 500;
 
             final float[] value1 = new float[9];
             final float[] value2 = new float[9];
-            originMatrix.getValues(value1);
             matrix.getValues(value2);
+            if(zoomToggle) {
+                originMatrix.getValues(value1);
+                zoomToggle =false;
+            }else{
+                float rx = motionEvent.getRawX();
+                float ry = motionEvent.getRawY();
+                float mx = imageView.getWidth()/2;
+                float my = imageView.getHeight()/2;
+                matrix.setScale(1.0f,1.0f,mx,my);
+                float tx = mx>rx ? mx + (value2[Matrix.MTRANS_X]-(mx-rx)):(value2[Matrix.MTRANS_X]-(rx-mx))-mx;
+                float ty = my>ry ? my - (value2[Matrix.MTRANS_Y]-(my-ry)):(value2[Matrix.MTRANS_Y]-(ry-my))-my;
+                matrix.postTranslate(tx,ty);
+                matrix.getValues(value1);
+                zoomToggle = true;
+
+                //value1[Matrix.MTRANS_X] = ;
+                //value1[Matrix.MTRANS_Y] = ry-(value2[Matrix.MTRANS_Y]-ry)-((value2[Matrix.MTRANS_Y]-ry)*(1.0f-value2[Matrix.MSCALE_Y]));
+                /*value1[0] = 1.0f;
+                value1[5] = 1.0f;
+                float fx = ((value2[Matrix.MTRANS_X]-motionEvent.getRawX())*(1.0f-value2[Matrix.MSCALE_X]));
+                float fy = (value2[Matrix.MTRANS_Y]-motionEvent.getRawY())*(1.0f-value2[Matrix.MSCALE_Y]);
+                value1[Matrix.MTRANS_X] = fx;
+                value1[Matrix.MTRANS_Y] = fy;*/
+            }
+
 
             final float[] value = new float[9];
 
@@ -344,8 +366,7 @@ public class ImageAdator extends PagerAdapter {
                 value[i] = value1[i]-value2[i];
             }
 
-            if(zoomToggle) {
-                imageView.post(new Runnable() {
+            imageView.post(new Runnable() {
                     @Override
                     public void run() {
                         float t = (float) (System.currentTimeMillis() - startTime) / duration;
@@ -357,9 +378,9 @@ public class ImageAdator extends PagerAdapter {
                             ft[i] = value2[i] + value[i] * t;
                         }
 
-                        Log.e("Value", "value X : " + value[0] + "/" + value[1] + "/" + value[2]);
-                        Log.e("Value", "value Y : " + value[3] + "/" + value[4] + "/" + value[5]);
-                        Log.e("Value", "value per : " + value[6] + "/" + value[7] + "/" + value[8]);
+                        Log.e("Value", "value X : " + ft[0] + "/" + ft[1] + "/" + ft[2]);
+                        Log.e("Value", "value Y : " + ft[3] + "/" + ft[4] + "/" + ft[5]);
+                        Log.e("Value", "value per : " + ft[6] + "/" + ft[7] + "/" + ft[8]);
 
                         matrix.setValues(ft);
 
@@ -367,32 +388,11 @@ public class ImageAdator extends PagerAdapter {
                         imageView.invalidate();
                         if (t < 1f) {
                             imageView.post(this);
-                            zoomToggle = false;
+                            //zoomToggle = !zoomToggle;
                         }
                     }
-                });
-            }else{
-                imageView.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        float t = (float) (System.currentTimeMillis() - startTime) / duration;
-                        t = t > 1.0f ? 1.0f : t;
-                        Log.d("double", t + "");
+            });
 
-                        Log.d("zoom", zoomToggle + "");
-                        float ft = 1.0f - value2[0];
-                        int[] size = getWindowSize();
-                        matrix.setScale(t, t, motionEvent.getRawX(), motionEvent.getRawY());
-
-                        imageView.setImageMatrix(matrix);
-                        imageView.invalidate();
-                        if (t < 1f) {
-                            imageView.post(this);
-                            zoomToggle =true;
-                        }
-                    }
-                });
-            }
 
             return false;
         }
