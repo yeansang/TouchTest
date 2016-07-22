@@ -2,14 +2,20 @@ package com.example.nemus.touchtest;
 
 import android.animation.Animator;
 import android.annotation.SuppressLint;
+import android.graphics.ColorFilter;
+import android.graphics.ColorMatrixColorFilter;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
@@ -39,10 +45,42 @@ public class MainActivity extends AppCompatActivity {
     private static final int UI_ANIMATION_DELAY = 300;
     private final Handler mHideHandler = new Handler();
     private View mContentView;
-    TextView mDownView;
+    Button nomalButton;
+    Button rgButton;
+    Button gButton;
+    Button bButton;
+    //TextView mDownView;
     TextView mUpView;
     private ViewPager mViewPager;
     private ImageAdator pa;
+    private ImageView imageView;
+
+
+    float[] mat1 = new float[]
+            {
+                    0.42f, 0.58f, 0f, 0, 0,
+                    0.58f, 0.42f, 0f, 0, 0,
+                    0f, 0f, 1f, 0, 0,
+                    0f, 0f, 0f, 1, 0};
+    float[] mat2 = new float[]
+            {
+                    1, 0, 0, 0, 0,
+                    0.5f, 0, 0.5f, 0, 0,
+                    0f, 0f, 1f, 0, 0,
+                    0f, 0f, 0f, 1, 0};
+    float[] mat3 = new float[]
+            {
+                    1, 0, 0, 0, 0,
+                    0, 1, 0, 0, 0,
+                    0.5f,0f,0.5f, 0, 0,
+                    0f, 0f, 0f, 1, 0};
+    float[] mat4 = new float[]
+            {
+                    1, 0, 0, 0, 0,
+                    0, 1, 0, 0, 0,
+                    0, 0, 1, 0, 0,
+                    0f, 0f, 0f, 1, 0};
+
 
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
@@ -93,15 +131,21 @@ public class MainActivity extends AppCompatActivity {
         mVisible = true;
 
         mContentView = findViewById(R.id.fullscreen_content);
-        mDownView = (TextView) findViewById(R.id.picText);
+        //mDownView = (TextView) findViewById(R.id.picText);
         mUpView = (TextView) findViewById(R.id.titleText);
         mViewPager = (ViewPager) findViewById(R.id.viewPager);
+        rgButton = (Button)findViewById(R.id.button3);
+        nomalButton = (Button)findViewById(R.id.button4);
+        bButton = (Button)findViewById(R.id.button);
+        gButton = (Button)findViewById(R.id.button2);
+
         pa = new ImageAdator(getLayoutInflater(), this);
 
         mUpView.setText(pa.getPageTitle(0));
-        mDownView.setText(1+"/"+pa.getCount());
+        //mDownView.setText(1+"/"+pa.getCount());
 
         mViewPager.setAdapter(pa);
+
         mViewPager.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -110,7 +154,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageSelected(int pos) {
                 mUpView.setText(pa.getPageTitle(pos));
-                mDownView.setText((pos+1)+"/"+pa.getCount());
+                //mDownView.setText((pos+1)+"/"+pa.getCount());
+                imageView = (ImageView)mViewPager.findViewWithTag(mViewPager.getCurrentItem());
             }
 
             @Override
@@ -118,7 +163,37 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        imageView = (ImageView)mViewPager.findViewWithTag(mViewPager.getCurrentItem());
 
+        nomalButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ColorMatrixColorFilter cf = new ColorMatrixColorFilter(mat4);
+                imageView.setColorFilter(cf);
+            }
+        });
+
+        rgButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ColorMatrixColorFilter cf = new ColorMatrixColorFilter(mat1);
+                imageView.setColorFilter(cf);
+            }
+        });
+        gButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ColorMatrixColorFilter cf = new ColorMatrixColorFilter(mat2);
+                imageView.setColorFilter(cf);
+            }
+        });
+        bButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ColorMatrixColorFilter cf = new ColorMatrixColorFilter(mat3);
+                imageView.setColorFilter(cf);
+            }
+        });
 
         // Set up the user interaction to manually show or hide the system UI.
         mViewPager.setOnClickListener(new View.OnClickListener() {
@@ -165,9 +240,9 @@ public class MainActivity extends AppCompatActivity {
         mHideHandler.removeCallbacks(mShowPart2Runnable);
         mHideHandler.postDelayed(mHidePart2Runnable, UI_ANIMATION_DELAY);
 
-        mDownView.animate().alpha(0.0f).setDuration(500);
+        //mDownView.animate().alpha(0.0f).setDuration(500);
         mUpView.animate().alpha(0.0f).setDuration(500);
-        mDownView.animate().setListener(new Animator.AnimatorListener() {
+        /*mDownView.animate().setListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animator) {
             }
@@ -175,7 +250,7 @@ public class MainActivity extends AppCompatActivity {
             public void onAnimationEnd(Animator animator) {
                 if(!mVisible) {
                     mUpView.setVisibility(View.INVISIBLE);
-                    mDownView.setVisibility(View.INVISIBLE);
+                    //mDownView.setVisibility(View.INVISIBLE);
                 }
             }
             @Override
@@ -184,7 +259,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onAnimationRepeat(Animator animator) {
             }
-        });
+        });*/
     }
 
     @SuppressLint("InlinedApi")
@@ -197,10 +272,10 @@ public class MainActivity extends AppCompatActivity {
         mHideHandler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY);
 
 
-        mDownView.setVisibility(View.VISIBLE);
+        //mDownView.setVisibility(View.VISIBLE);
         mUpView.setVisibility(View.VISIBLE);
         mUpView.animate().alpha(0.5f).setDuration(500);
-        mDownView.animate().alpha(0.5f).setDuration(500);
+        //mDownView.animate().alpha(0.5f).setDuration(500);
     }
 
     /**
