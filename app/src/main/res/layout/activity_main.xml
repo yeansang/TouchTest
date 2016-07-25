@@ -48,25 +48,25 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="청색맹"
+            android:text="보정"
             android:id="@+id/button"
-            android:layout_alignParentBottom="true"
-            android:layout_toRightOf="@+id/button2"
-            android:layout_toEndOf="@+id/button2" />
+            android:layout_alignTop="@+id/button4"
+            android:layout_toLeftOf="@+id/space2"
+            android:layout_toStartOf="@+id/space2" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="녹색맹"
             android:id="@+id/button2"
-            android:layout_alignParentBottom="true"
-            android:layout_toRightOf="@+id/button3"
-            android:layout_toEndOf="@+id/button3" />
+            android:layout_alignTop="@+id/button3"
+            android:layout_toEndOf="@+id/space"
+            android:layout_toRightOf="@+id/space" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="적록"
+            android:text="적색맹"
             android:id="@+id/button3"
             android:layout_alignParentBottom="true"
             android:layout_alignParentLeft="true"
@@ -78,8 +78,33 @@
             android:text="정상"
             android:id="@+id/button4"
             android:layout_alignParentBottom="true"
-            android:layout_toRightOf="@+id/button"
-            android:layout_toEndOf="@+id/button" />
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true" />
+
+        <Space
+            android:layout_width="20px"
+            android:layout_height="20px"
+            android:layout_alignParentBottom="true"
+            android:layout_alignTop="@+id/button2"
+            android:layout_toLeftOf="@+id/button"
+            android:layout_toRightOf="@+id/button2"
+            android:layout_toEndOf="@+id/button2" />
+
+        <Space
+            android:layout_width="20px"
+            android:layout_height="20px"
+            android:layout_alignParentBottom="true"
+            android:layout_toRightOf="@+id/button3"
+            android:layout_alignTop="@+id/button3"
+            android:id="@+id/space" />
+
+        <Space
+            android:layout_width="20px"
+            android:layout_height="20px"
+            android:layout_alignTop="@+id/button"
+            android:layout_toLeftOf="@+id/button4"
+            android:layout_alignParentBottom="true"
+            android:id="@+id/space2" />
 
 
     </RelativeLayout>

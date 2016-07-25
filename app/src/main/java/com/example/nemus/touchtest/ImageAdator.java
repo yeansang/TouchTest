@@ -1,10 +1,12 @@
 package com.example.nemus.touchtest;
 
-import android.graphics.ColorMatrixColorFilter;
+import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.support.annotation.Nullable;
 import android.support.v4.view.PagerAdapter;
 import android.util.Log;
 import android.view.Display;
@@ -25,36 +27,9 @@ public class ImageAdator extends PagerAdapter {
     private boolean zoomToggle = false;
     private boolean toggle = true;
 
-    float[] mat1 = new float[]
-            {
-                    0.42f, 0.23f, 0.23f, 0, 0,
-                    0.23f, 0.42f, 0.23f, 0, 0,
-                    0f, 0f, 1f, 0, 0,
-                    0f, 0f, 0f, 1, 0};
-    float[] mat2 = new float[]
-            {
-                    1, 0, 0, 0, 0,
-                    0.5f, 0, 0.5f, 0, 0,
-                    0f, 0f, 1f, 0, 0,
-                    0f, 0f, 0f, 1, 0};
-    float[] mat3 = new float[]
-            {
-                    1, 0, 0, 0, 0,
-                    0, 1, 0, 0, 0,
-                    0.5f,0f,0.5f, 0, 0,
-                    0f, 0f, 0f, 1, 0};
-    float[] mat4 = new float[]
-            {
-                    1, 0, 0, 0, 0,
-                    0, 1, 0, 0, 0,
-                    0, 0, 1, 0, 0,
-                    0f, 0f, 0f, 1, 0};
-
     private Matrix matrix = new Matrix();
     private Matrix savedMatrix = new Matrix();
     private Matrix originMatrix = new Matrix();
-
-    private ViewGroup viewGroup;
 
     private static final int NONE = 0;
     private static final int DRAG = 1;
@@ -68,15 +43,17 @@ public class ImageAdator extends PagerAdapter {
     private float d = 0f;
     private float newRot = 0f;
     private float[] lastEvent = null;
+    private Bitmap inview;
+    private boolean inside = false;
 
 
-    public ImageAdator(LayoutInflater layoutInflater, MainActivity act){
+    public ImageAdator(LayoutInflater layoutInflater, MainActivity act, @Nullable Bitmap imageView){
         this.inflater = layoutInflater;
         this.main = act;
-    }
-
-    public ViewGroup getViewGroup(){
-        return viewGroup;
+        if(imageView != null) {
+            this.inview = imageView;
+            inside = true;
+        }
     }
 
     @Override
@@ -85,8 +62,13 @@ public class ImageAdator extends PagerAdapter {
         View view = inflater.inflate(R.layout.pager_imageview,null);
 
         final ImageView imageView = (ImageView)view.findViewById(R.id.imageview);
+        Log.d("tag",position+""+view.toString());
         view.setTag(position);
-        imageView.setImageResource(R.drawable.image1+position);
+        if(inside){
+            imageView.setImageBitmap(inview);
+        }else {
+            imageView.setImageResource(R.drawable.image1 + position);
+        }
 
         view.setOnTouchListener(new View.OnTouchListener() {
             private GestureDetector gestureDetector = new GestureDetector(main.getApplicationContext(), new GestureDetector.OnGestureListener() {
@@ -149,7 +131,8 @@ public class ImageAdator extends PagerAdapter {
                         oldDist = spacing(event);
                         if (oldDist > 10f) {
                             savedMatrix.set(matrix);
-                            midPoint(midStart,event);
+                            midPoint(mid,event,view);
+                            midPoint(midStart,event, view);
                             mode = ZOOM;
                         }
                         lastEvent = new float[4];
@@ -166,6 +149,7 @@ public class ImageAdator extends PagerAdapter {
                         lastEvent = null;
                         break;
                     case MotionEvent.ACTION_MOVE:
+
                         zoomToggle = true;
                         if (mode == DRAG) {
                             Log.d("switch","4");
@@ -173,42 +157,50 @@ public class ImageAdator extends PagerAdapter {
                             float dx = event.getX() - start.x;
                             float dy = event.getY() - start.y;
                             matrix.postTranslate(dx, dy);
+                            Log.d("dd",dx+"/"+dy);
                         } else if (mode == ZOOM) {
+
+                            float[] values = new float[9];
+                            matrix.getValues(values);
+                            float mdx = midStart.x - mid.x;
+                            float mdy = midStart.y - mid.y;
+                            float sx = values[0];
+                            /*values[Matrix.MTRANS_X] += mdx*sx*10;
+                            values[Matrix.MTRANS_Y] += mdy*sx*10;*/
+                            Log.e("Value1", "value X : "+values[0]+"/"+values[1]+"/"+values[2]);
+                            Log.e("Value1", "value Y : "+values[3]+"/"+values[4]+"/"+values[5]);
+                            Log.e("Value1", "value per : "+values[6]+"/"+values[7]+"/"+values[8]);
+                            Log.d("md",mid.x+"/"+mid.y);
+                            //matrix.postTranslate(mdx,mdy);
+
                             Log.d("switch","5");
-                            midPoint(mid, event);
-                            //matrix.postTranslate(mdx*sx,mdy*sx);
+
+                            //
                             float newDist = spacing(event);
                             if (newDist > 10f) {
                                 Log.d("switch","6");
                                 matrix.set(savedMatrix);
                                 float scale = (newDist / oldDist);
-                                matrix.postScale(scale, scale, mid.x, mid.y);
-                            }
-                            if (lastEvent != null && event.getPointerCount() == 2) {
+
                                 Log.d("switch","7");
                                 newRot = rotation(event);
                                 float r = newRot - d;
-                                /*float tx = values[2];
+                                matrix.getValues(values);
+                                float tx = values[2];
                                 float ty = values[5];
-                                */
-                                matrix.postRotate(r, event.getRawX(), event.getRawY());
+                                //float sx = values[0];
+                                float xc = (view.getWidth() / 2) * sx;
+                                float yc = (view.getHeight() / 2) * sx;
+                                int[] is = getRealImageSize(imageView);
 
+                                matrix.postRotate(r, mid.x, mid.y);
+                                matrix.postScale(scale, scale,mid.x, mid.y);
+                                matrix.postTranslate(mdx,mdy);
+                                Log.d("mid",mid.x+"/"+mid.y);
+                                Log.d("center", tx+"/"+ty);
+                                midPoint(midStart,event, view);
                             }
-                            float[] values = new float[9];
-                            matrix.getValues(values);
-                            float mdx = mid.x - midStart.x;
-                            float mdy = mid.y - midStart.y;
-                            float sx = values[0];
-                            values[Matrix.MTRANS_X] += mdx*sx*10;
-                            values[Matrix.MTRANS_Y] += mdy*sx*10;
-                            Log.e("Value1", "value X : "+values[0]+"/"+values[1]+"/"+values[2]);
-                            Log.e("Value1", "value Y : "+values[3]+"/"+values[4]+"/"+values[5]);
-                            Log.e("Value1", "value per : "+values[6]+"/"+values[7]+"/"+values[8]);
-                            Log.d("md",mdx+"/"+mdy);
-                            float dx = event.getX() - start.x;
-                            float dy = event.getY() - start.y;
-                            matrix.postTranslate(dx,dy);
-                            midStart.set(mid.x,mid.y);
+
                         }
                         break;
                 }
@@ -234,9 +226,10 @@ public class ImageAdator extends PagerAdapter {
             /**
              * Calculate the mid point of the first two fingers
              */
-            private void midPoint(PointF point, MotionEvent event) {
-                float x = event.getX(0) + event.getX(1);
-                float y = event.getY(0) + event.getY(1);
+            private void midPoint(PointF point, MotionEvent event, View view) {
+                int[] p = getRowPoint(view, event, 1);
+                float x = event.getRawX() + p[0];
+                float y = event.getRawY() + p[1];
                 point.set(x / 2, y / 2);
             }
 
@@ -255,7 +248,6 @@ public class ImageAdator extends PagerAdapter {
         });
 
         container.addView(view);
-        this.viewGroup = container;
         return view;
     }
 
@@ -265,15 +257,15 @@ public class ImageAdator extends PagerAdapter {
         toggle = true;
         switch (pos){
             case 0:
-                return "아이유";
+                return "sample color";
             case 1:
-                return "야경";
+                return "6";
             case 2:
-                return "긴목청둥오리";
+                return "42";
             case 3:
-                return "long 1";
+                return "12";
             case 4:
-                return "long 2";
+                return "오리";
             default:
                 return null;
         }
@@ -286,6 +278,7 @@ public class ImageAdator extends PagerAdapter {
 
     @Override
     public int getCount() {
+        if(inside) return 1;
         return 5;
     }
 

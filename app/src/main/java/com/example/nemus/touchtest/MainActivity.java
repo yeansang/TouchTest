@@ -2,8 +2,12 @@ package com.example.nemus.touchtest;
 
 import android.animation.Animator;
 import android.annotation.SuppressLint;
+import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.ColorFilter;
 import android.graphics.ColorMatrixColorFilter;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
@@ -20,6 +24,9 @@ import android.widget.TextView;
 import android.widget.ViewFlipper;
 
 import org.w3c.dom.Text;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -56,25 +63,25 @@ public class MainActivity extends AppCompatActivity {
     private ImageView imageView;
 
 
-    float[] mat1 = new float[]
+    float[] mat1 = new float[] //red-out
             {
-                    0.42f, 0.58f, 0f, 0, 0,
-                    0.58f, 0.42f, 0f, 0, 0,
+                    0f, 1f, 0f, 0, 0,
+                    0f, 1f, 0f, 0, 0,
                     0f, 0f, 1f, 0, 0,
                     0f, 0f, 0f, 1, 0};
-    float[] mat2 = new float[]
+    float[] mat2 = new float[] //green-out
             {
-                    1, 0, 0, 0, 0,
-                    0.5f, 0, 0.5f, 0, 0,
+                    0.2f, 0.8f, 0, 0, 0,
+                    0.2f, 0.8f, 0f, 0, 0,
                     0f, 0f, 1f, 0, 0,
                     0f, 0f, 0f, 1, 0};
-    float[] mat3 = new float[]
+    float[] mat3 = new float[] //fix
             {
-                    1, 0, 0, 0, 0,
-                    0, 1, 0, 0, 0,
-                    0.5f,0f,0.5f, 0, 0,
+                    1f, 0f, 0f, 0, 0,
+                    0f, 1f, 0f, 0f, 0,
+                    0.2f, 0f, 0.8f, 0f, 0,
                     0f, 0f, 0f, 1, 0};
-    float[] mat4 = new float[]
+    float[] mat4 = new float[] //normal
             {
                     1, 0, 0, 0, 0,
                     0, 1, 0, 0, 0,
@@ -139,7 +146,15 @@ public class MainActivity extends AppCompatActivity {
         bButton = (Button)findViewById(R.id.button);
         gButton = (Button)findViewById(R.id.button2);
 
-        pa = new ImageAdator(getLayoutInflater(), this);
+        Intent intent = getIntent();
+        String action = intent.getAction();
+        String type = intent.getType();
+
+        if (Intent.ACTION_SEND.equals(action) && type != null) {
+            pa = new ImageAdator(getLayoutInflater(), this, handleSendImage(intent));
+        }else{
+            pa = new ImageAdator(getLayoutInflater(), this, null);
+        }
 
         mUpView.setText(pa.getPageTitle(0));
         //mDownView.setText(1+"/"+pa.getCount());
@@ -163,11 +178,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        imageView = (ImageView)mViewPager.findViewWithTag(mViewPager.getCurrentItem());
+
 
         nomalButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                imageView = (ImageView)mViewPager.findViewWithTag(mViewPager.getCurrentItem());
                 ColorMatrixColorFilter cf = new ColorMatrixColorFilter(mat4);
                 imageView.setColorFilter(cf);
             }
@@ -176,6 +192,7 @@ public class MainActivity extends AppCompatActivity {
         rgButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                imageView = (ImageView)mViewPager.findViewWithTag(mViewPager.getCurrentItem());
                 ColorMatrixColorFilter cf = new ColorMatrixColorFilter(mat1);
                 imageView.setColorFilter(cf);
             }
@@ -183,6 +200,7 @@ public class MainActivity extends AppCompatActivity {
         gButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                imageView = (ImageView)mViewPager.findViewWithTag(mViewPager.getCurrentItem());
                 ColorMatrixColorFilter cf = new ColorMatrixColorFilter(mat2);
                 imageView.setColorFilter(cf);
             }
@@ -190,6 +208,7 @@ public class MainActivity extends AppCompatActivity {
         bButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                imageView = (ImageView)mViewPager.findViewWithTag(mViewPager.getCurrentItem());
                 ColorMatrixColorFilter cf = new ColorMatrixColorFilter(mat3);
                 imageView.setColorFilter(cf);
             }
@@ -285,5 +304,24 @@ public class MainActivity extends AppCompatActivity {
     private void delayedHide(int delayMillis) {
         mHideHandler.removeCallbacks(mHideRunnable);
         mHideHandler.postDelayed(mHideRunnable, delayMillis);
+    }
+
+    private Bitmap handleSendImage(Intent intent) {
+        Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
+        Bitmap bm;
+        if (imageUri != null) {
+            try {
+                bm = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
+                return bm;
+            } catch (FileNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+        }
+        return null;
     }
 }
