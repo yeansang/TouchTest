@@ -167,9 +167,7 @@ public class ImageAdator extends PagerAdapter {
                             float sx = values[0];
                             /*values[Matrix.MTRANS_X] += mdx*sx*10;
                             values[Matrix.MTRANS_Y] += mdy*sx*10;*/
-                            Log.e("Value1", "value X : "+values[0]+"/"+values[1]+"/"+values[2]);
-                            Log.e("Value1", "value Y : "+values[3]+"/"+values[4]+"/"+values[5]);
-                            Log.e("Value1", "value per : "+values[6]+"/"+values[7]+"/"+values[8]);
+
                             Log.d("md",mid.x+"/"+mid.y);
                             //matrix.postTranslate(mdx,mdy);
 
@@ -207,6 +205,13 @@ public class ImageAdator extends PagerAdapter {
 
                 view.setImageMatrix(matrix);
                 view.invalidate();
+
+                float[] values = new float[9];
+                matrix.getValues(values);
+
+                Log.e("Value1", "value X : "+values[0]+"/"+values[1]+"/"+values[2]);
+                Log.e("Value1", "value Y : "+values[3]+"/"+values[4]+"/"+values[5]);
+                Log.e("Value1", "value per : "+values[6]+"/"+values[7]+"/"+values[8]);
 
                 CustomDoubletap cd = new CustomDoubletap(view);
                 gestureDetector.setOnDoubleTapListener(cd);

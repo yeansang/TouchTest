@@ -65,27 +65,28 @@ public class MainActivity extends AppCompatActivity {
 
     float[] mat1 = new float[] //red-out
             {
-                    0f, 1f, 0f, 0, 0,
-                    0f, 1f, 0f, 0, 0,
+                    0.2f, 0.5f, 0.3f, 0, 0,
+                    0.2f, 0.5f, 0.3f, 0, 0,
                     0f, 0f, 1f, 0, 0,
                     0f, 0f, 0f, 1, 0};
     float[] mat2 = new float[] //green-out
             {
-                    0.2f, 0.8f, 0, 0, 0,
-                    0.2f, 0.8f, 0f, 0, 0,
+                    0.5f, 0.5f, 0, 0, 0,
+                    0.5f, 0.5f, 0f, 0, 0,
                     0f, 0f, 1f, 0, 0,
                     0f, 0f, 0f, 1, 0};
     float[] mat3 = new float[] //fix
             {
-                    1f, 0f, 0f, 0, 0,
-                    0f, 1f, 0f, 0f, 0,
-                    0.2f, 0f, 0.8f, 0f, 0,
+                    1f, 0f, 0f, 0f, 0,
+                    0.3f, 0.2f, 0, 0, 0,
+                    0f, 0, 1f, 0, 0,
                     0f, 0f, 0f, 1, 0};
+
     float[] mat4 = new float[] //normal
             {
-                    1, 0, 0, 0, 0,
-                    0, 1, 0, 0, 0,
-                    0, 0, 1, 0, 0,
+                    1f, 0f, 0f, 0, 0,
+                    0f, 1f, 0f, 0f, 0,
+                    0f, 0f, 1f, 0f, 0,
                     0f, 0f, 0f, 1, 0};
 
 
