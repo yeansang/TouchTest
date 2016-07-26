@@ -1,29 +1,21 @@
 package com.example.nemus.touchtest;
 
-import android.animation.Animator;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.ColorFilter;
 import android.graphics.ColorMatrixColorFilter;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.ViewFlipper;
-
-import org.w3c.dom.Text;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -51,12 +43,10 @@ public class MainActivity extends AppCompatActivity {
      */
     private static final int UI_ANIMATION_DELAY = 300;
     private final Handler mHideHandler = new Handler();
-    private View mContentView;
     Button nomalButton;
     Button rgButton;
     Button gButton;
     Button bButton;
-    //TextView mDownView;
     TextView mUpView;
     private ViewPager mViewPager;
     private ImageAdator pa;
@@ -69,12 +59,14 @@ public class MainActivity extends AppCompatActivity {
                     0.2f, 0.5f, 0.3f, 0, 0,
                     0f, 0f, 1f, 0, 0,
                     0f, 0f, 0f, 1, 0};
+
     float[] mat2 = new float[] //green-out
             {
                     0.5f, 0.5f, 0, 0, 0,
                     0.5f, 0.5f, 0f, 0, 0,
                     0f, 0f, 1f, 0, 0,
                     0f, 0f, 0f, 1, 0};
+
     float[] mat3 = new float[] //fix
             {
                     1f, 0f, 0f, 0f, 0,
@@ -105,7 +97,6 @@ public class MainActivity extends AppCompatActivity {
             if (actionBar != null) {
                 actionBar.show();
             }
-            //mControlsView.setVisibility(View.VISIBLE);
         }
     };
     private boolean mVisible;
@@ -138,8 +129,6 @@ public class MainActivity extends AppCompatActivity {
 
         mVisible = true;
 
-        mContentView = findViewById(R.id.fullscreen_content);
-        //mDownView = (TextView) findViewById(R.id.picText);
         mUpView = (TextView) findViewById(R.id.titleText);
         mViewPager = (ViewPager) findViewById(R.id.viewPager);
         rgButton = (Button)findViewById(R.id.button3);
@@ -158,7 +147,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         mUpView.setText(pa.getPageTitle(0));
-        //mDownView.setText(1+"/"+pa.getCount());
 
         mViewPager.setAdapter(pa);
 
@@ -198,6 +186,7 @@ public class MainActivity extends AppCompatActivity {
                 imageView.setColorFilter(cf);
             }
         });
+
         gButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -206,6 +195,7 @@ public class MainActivity extends AppCompatActivity {
                 imageView.setColorFilter(cf);
             }
         });
+
         bButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -223,10 +213,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Upon interacting with UI controls, delay any scheduled hide()
-        // operations to prevent the jarring behavior of controls going away
-        // while interacting with the UI.
-        //findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
     }
 
     @Override
@@ -260,26 +246,8 @@ public class MainActivity extends AppCompatActivity {
         mHideHandler.removeCallbacks(mShowPart2Runnable);
         mHideHandler.postDelayed(mHidePart2Runnable, UI_ANIMATION_DELAY);
 
-        //mDownView.animate().alpha(0.0f).setDuration(500);
         mUpView.animate().alpha(0.0f).setDuration(500);
-        /*mDownView.animate().setListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animator) {
-            }
-            @Override
-            public void onAnimationEnd(Animator animator) {
-                if(!mVisible) {
-                    mUpView.setVisibility(View.INVISIBLE);
-                    //mDownView.setVisibility(View.INVISIBLE);
-                }
-            }
-            @Override
-            public void onAnimationCancel(Animator animator) {
-            }
-            @Override
-            public void onAnimationRepeat(Animator animator) {
-            }
-        });*/
+
     }
 
     @SuppressLint("InlinedApi")
@@ -291,11 +259,8 @@ public class MainActivity extends AppCompatActivity {
         mHideHandler.removeCallbacks(mHidePart2Runnable);
         mHideHandler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY);
 
-
-        //mDownView.setVisibility(View.VISIBLE);
         mUpView.setVisibility(View.VISIBLE);
         mUpView.animate().alpha(0.5f).setDuration(500);
-        //mDownView.animate().alpha(0.5f).setDuration(500);
     }
 
     /**
@@ -315,10 +280,8 @@ public class MainActivity extends AppCompatActivity {
                 bm = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
                 return bm;
             } catch (FileNotFoundException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
 
