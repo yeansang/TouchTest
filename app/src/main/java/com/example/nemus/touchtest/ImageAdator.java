@@ -148,7 +148,8 @@ public class ImageAdator extends PagerAdapter {
                         break;
                     case MotionEvent.ACTION_MOVE:
 
-                        zoomToggle = true;
+                        //zoomToggle = true;
+
                         if (mode == DRAG) {
                             Log.d("switch","4");
                             matrix.set(savedMatrix);
@@ -157,6 +158,7 @@ public class ImageAdator extends PagerAdapter {
                             matrix.postTranslate(dx, dy);
                             Log.d("dd",dx+"/"+dy);
                         } else if (mode == ZOOM) {
+                            zoomToggle = true;
 
                             float mdx = midStart.x - mid.x;
                             float mdy = midStart.y - mid.y;
@@ -241,6 +243,7 @@ public class ImageAdator extends PagerAdapter {
     @Override
     public CharSequence getPageTitle(int pos){
         toggle = true;
+        if(inside) return "image";
         switch (pos){
             case 0:
                 return "sample color";
@@ -249,9 +252,9 @@ public class ImageAdator extends PagerAdapter {
             case 2:
                 return "42";
             case 3:
-                return "12";
+                return "고추밭";
             case 4:
-                return "오리";
+                return "고추밭";
             default:
                 return null;
         }
@@ -348,7 +351,7 @@ public class ImageAdator extends PagerAdapter {
         public boolean onDoubleTap(final MotionEvent motionEvent) {
             final Matrix matrix = imageView.getImageMatrix();
             final long startTime = System.currentTimeMillis();
-            final long duration = 500;
+            final long duration = 400;
 
             final float[] value1 = new float[9];
             final float[] value2 = new float[9];
@@ -357,17 +360,10 @@ public class ImageAdator extends PagerAdapter {
                 originMatrix.getValues(value1);
                 zoomToggle =false;
             }else{
-                float rx = motionEvent.getRawX();
-                float ry = motionEvent.getRawY();
-                float mx = imageView.getWidth()/2;
-                float my = imageView.getHeight()/2;
-                matrix.setScale(1.0f,1.0f,mx,my);
-                float tx = mx>rx ? mx + (value2[Matrix.MTRANS_X]-(mx-rx)):(value2[Matrix.MTRANS_X]-(rx-mx))-mx;
-                float ty = my>ry ? my - (value2[Matrix.MTRANS_Y]-(my-ry)):(value2[Matrix.MTRANS_Y]-(ry-my))-my;
-                matrix.postTranslate(tx,ty);
+                matrix.getValues(value1);
+                matrix.postScale(1.0f/value1[Matrix.MSCALE_X],1.0f/value1[Matrix.MSCALE_Y],motionEvent.getRawX(),motionEvent.getRawY());
                 matrix.getValues(value1);
                 zoomToggle = true;
-
             }
 
 
