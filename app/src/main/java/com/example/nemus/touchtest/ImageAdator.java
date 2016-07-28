@@ -387,7 +387,7 @@ public class ImageAdator extends PagerAdapter {
         public boolean onDoubleTap(final MotionEvent motionEvent) {
             final Matrix matrix = imageView.getImageMatrix();
             final long startTime = System.currentTimeMillis();
-            final long duration = 400;
+            final long duration = 1000;
 
             final float[] value1 = new float[9];
             final float[] value2 = new float[9];
