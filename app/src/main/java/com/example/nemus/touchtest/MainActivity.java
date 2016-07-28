@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
     Button gButton;
     Button bButton;
     TextView mUpView;
-    private ViewPager mViewPager;
+    MyViewPager mViewPager;
     private ImageAdator pa;
     private ImageView imageView;
 
@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
         mVisible = true;
 
         mUpView = (TextView) findViewById(R.id.titleText);
-        mViewPager = (ViewPager) findViewById(R.id.viewPager);
+        mViewPager = (MyViewPager) findViewById(R.id.viewPager);
         rgButton = (Button)findViewById(R.id.button3);
         nomalButton = (Button)findViewById(R.id.button4);
         bButton = (Button)findViewById(R.id.button);
@@ -212,7 +212,6 @@ public class MainActivity extends AppCompatActivity {
                 toggle();
             }
         });
-
     }
 
     @Override

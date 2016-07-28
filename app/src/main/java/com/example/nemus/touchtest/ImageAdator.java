@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.PointF;
+import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.Nullable;
 import android.support.v4.view.PagerAdapter;
@@ -44,6 +45,7 @@ public class ImageAdator extends PagerAdapter {
     private float[] lastEvent = null;
     private Bitmap inview;
     private boolean inside = false;
+    private boolean pager = true;
 
 
     public ImageAdator(LayoutInflater layoutInflater, MainActivity act, @Nullable Bitmap imageView){
@@ -68,6 +70,7 @@ public class ImageAdator extends PagerAdapter {
         }else {
             imageView.setImageResource(R.drawable.image1 + position);
         }
+
 
         view.setOnTouchListener(new View.OnTouchListener() {
             private GestureDetector gestureDetector = new GestureDetector(main.getApplicationContext(), new GestureDetector.OnGestureListener() {
@@ -107,15 +110,18 @@ public class ImageAdator extends PagerAdapter {
 
                 ImageView view = (ImageView) v;
                 matrix = view.getImageMatrix();
+
+                float[] values = new float[9];
+                matrix.getValues(values);
+
+                Log.d("action", event.getAction()+"");
+
                 switch (event.getAction() & MotionEvent.ACTION_MASK) {
                     case MotionEvent.ACTION_DOWN:
                         if(toggle){
                             float[] value = new float[9];
                             matrix.getValues(value);
                             originMatrix.setValues(value);
-                            Log.e("Value1", "value X : "+value[0]+"/"+value[1]+"/"+value[2]);
-                            Log.e("Value1", "value Y : "+value[3]+"/"+value[4]+"/"+value[5]);
-                            Log.e("Value1", "value per : "+value[6]+"/"+value[7]+"/"+value[8]);
                             toggle = false;
                         }
                         Log.d("switch","1");
@@ -145,16 +151,36 @@ public class ImageAdator extends PagerAdapter {
                         Log.d("switch","3");
                         mode = NONE;
                         lastEvent = null;
+                        pager = true;
                         break;
                     case MotionEvent.ACTION_MOVE:
-
                         //zoomToggle = true;
-
+                        float[] value = new float[9];
+                        matrix.getValues(value);
                         if (mode == DRAG) {
+
                             Log.d("switch","4");
                             matrix.set(savedMatrix);
                             float dx = event.getX() - start.x;
                             float dy = event.getY() - start.y;
+
+                            if(zoomToggle) {
+                                main.mViewPager.setPagingEnabled(false);
+                                pager = false;
+                            }
+
+                            /*int window[] = getWindowSize();
+                            int image[] = getRealImageSize(imageView);
+
+                            if((!zoomToggle)) {
+                                main.mViewPager.setPagingEnabled(true);
+                                return false;
+                            }
+                            if(values[Matrix.MTRANS_X]>(window[0]*0.05)||(values[Matrix.MTRANS_X]+image[0]*values[Matrix.MSCALE_X])<(window[0]*0.95)){
+                                main.mViewPager.setPagingEnabled(true);
+                                return false;
+                            }*/
+
                             matrix.postTranslate(dx, dy);
                             Log.d("dd",dx+"/"+dy);
                         } else if (mode == ZOOM) {
@@ -189,12 +215,21 @@ public class ImageAdator extends PagerAdapter {
                 view.setImageMatrix(matrix);
                 view.invalidate();
 
-                float[] values = new float[9];
-                matrix.getValues(values);
-
                 Log.e("Value1", "value X : "+values[0]+"/"+values[1]+"/"+values[2]);
                 Log.e("Value1", "value Y : "+values[3]+"/"+values[4]+"/"+values[5]);
                 Log.e("Value1", "value per : "+values[6]+"/"+values[7]+"/"+values[8]);
+
+                int window[] = getWindowSize();
+                int image[] = getRealImageSize(imageView);
+
+                RectF point = new RectF();
+                matrix.mapRect(point);
+
+                Log.d("point", point.top+"/"+point.left);
+                Log.d("point", point.bottom+"/"+point.right);
+                /*Log.d("point", point[2]+"/"+point[3]);
+                Log.d("point", point[4]+"/"+point[5]);
+                Log.d("point", point[6]+"/"+point[7]);*/
 
                 CustomDoubletap cd = new CustomDoubletap(view);
                 gestureDetector.setOnDoubleTapListener(cd);
@@ -234,6 +269,7 @@ public class ImageAdator extends PagerAdapter {
                 return (float) Math.toDegrees(radians);
             }
         });
+
 
         container.addView(view);
         return view;
