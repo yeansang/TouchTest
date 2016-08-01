@@ -152,10 +152,9 @@ public class MainActivity extends AppCompatActivity {
 
         mViewPager.setAdapter(pa);
 
-        mViewPager.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+        mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             int beforePos = 0;
             int currentPos = 0;
-            boolean run = true;
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 //Log.d("Scroll", position+"/"+positionOffset+"/"+positionOffsetPixels);
@@ -173,7 +172,8 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onPageScrollStateChanged(int state) {
-                if((state == ViewPager.SCROLL_STATE_DRAGGING)&&run) {
+                //if((state == ViewPager.SCROLL_STATE_DRAGGING)) {
+
                     imageView = (ImageView) mViewPager.findViewWithTag(mViewPager.getCurrentItem());
                     Matrix matrix = imageView.getImageMatrix();
                     float edge[] = pa.matrixEdges(imageView,null);
@@ -184,18 +184,20 @@ public class MainActivity extends AppCompatActivity {
                     float xmin = pa.madMin(edge[0],edge[2],edge[4],edge[6]);
                     float xsize = imageView.getWidth();
 
-                    if(pa.right) {
+                    Log.d("pad", pa.right+"");
+
+                    if(pa.right&&pa.touch) {
                         ft[Matrix.MTRANS_X] += xsize - xmas;
-                    }else{
+                        Log.d("Scroll", "true");
+                    }else if(!pa.right&&pa.touch){
                         ft[Matrix.MTRANS_X] += 0-xmin;
+                        Log.d("Scroll", "false");
                     }
 
                     matrix.setValues(ft);
                     imageView.setImageMatrix(matrix);
                     imageView.invalidate();
-                    run = false;
-                }
-                if(state == ViewPager.SCROLL_STATE_IDLE) run = true;
+                //}
             }
         });
 

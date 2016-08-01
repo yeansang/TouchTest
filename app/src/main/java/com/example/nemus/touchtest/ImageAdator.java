@@ -27,7 +27,9 @@ public class ImageAdator extends PagerAdapter {
     MainActivity main;
     private boolean zoomToggle = false;
     private boolean toggle = true;
-    public boolean right = true;
+    public boolean right = false;
+    boolean touch = false;
+    boolean dxCal = true;
 
     private Matrix matrix = new Matrix();
     private Matrix savedMatrix = new Matrix();
@@ -47,7 +49,7 @@ public class ImageAdator extends PagerAdapter {
     private float[] lastEvent = null;
     private Bitmap inview;
     private boolean inside = false;
-    private boolean pager = false;
+    boolean pager = false;
 
 
     public ImageAdator(LayoutInflater layoutInflater, MainActivity act, @Nullable Bitmap imageView){
@@ -119,6 +121,7 @@ public class ImageAdator extends PagerAdapter {
                 float[] edge = matrixEdges(view, matrix);
 
                 Log.d("action", event.getAction()+"");
+                main.mViewPager.beginFakeDrag();
 
                 switch (event.getAction() & MotionEvent.ACTION_MASK) {
                     case MotionEvent.ACTION_DOWN:
@@ -128,6 +131,7 @@ public class ImageAdator extends PagerAdapter {
                             originMatrix.setValues(value);
                             toggle = false;
                         }
+
                         Log.d("switch","1");
                         savedMatrix.set(matrix);
                         start.set(event.getX(), event.getY());
@@ -151,12 +155,19 @@ public class ImageAdator extends PagerAdapter {
                         d = rotation(event);
                         break;
                     case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        mode = NONE;
+                        lastEvent = null;
+                        main.mViewPager.endFakeDrag();
+                        touch = false;
+                        dxCal = true;
+                        break;
                     case MotionEvent.ACTION_POINTER_UP:
                         Log.d("switch","3");
                         mode = NONE;
                         lastEvent = null;
-                        //main.mViewPager.beginFakeDrag();
-                        //main.mViewPager.endFakeDrag();
+                        touch = false;
+                        dxCal = true;
                         break;
                     case MotionEvent.ACTION_MOVE:
                         //zoomToggle = true;
@@ -168,9 +179,6 @@ public class ImageAdator extends PagerAdapter {
                             matrix.set(savedMatrix);
                             float dx = event.getX() - start.x;
                             float dy = event.getY() - start.y;
-                            //main.mViewPager.beginFakeDrag();
-
-
 
                             float xmas = madMax(edge[0],edge[2],edge[4],edge[6]);
                             float xmin = madMin(edge[0],edge[2],edge[4],edge[6]);
@@ -178,20 +186,29 @@ public class ImageAdator extends PagerAdapter {
 
                             Log.d("edge", xmas+"/"+xmin+"/"+xsize);
 
-                            if((0<xmin)||(xmas<(xsize-20))){
+                            if((0<xmin)||(xmas<(xsize))){
                                 Log.d("edge","true");
                                 pager = true;
-                                main.mViewPager.setPagingEnabled(pager);
+
+                                //main.mViewPager.setPagingEnabled(pager);
                                 if(0<xmin) right = false;
                                 if(xmas<xsize) right = true;
                             }else{
                                 Log.d("edge","false");
                                 pager = false;
-                                main.mViewPager.setPagingEnabled(pager);
+                                //main.mViewPager.setPagingEnabled(pager);
                             }
-                            if(pager) {
-                                //main.mViewPager.fakeDragBy(dx);
-                                return false;
+                            if((pager||touch)&&(((dx<0)&&right)||((dx>0)&&(!right)))) {
+                                if(dxCal) {
+                                    start.x = event.getX();
+                                    dxCal = false;
+                                }
+                                dx = event.getX() - start.x;
+                                main.mViewPager.fakeDragBy(dx);
+                                Log.d("Scroll",dx+"");
+
+                                touch = true;
+                                return true;
                             }else {
                                 matrix.postTranslate(dx, dy);
                             }
