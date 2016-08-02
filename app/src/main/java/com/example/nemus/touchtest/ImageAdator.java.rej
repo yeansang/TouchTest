@@ -1,0 +1,52 @@
+diff a/app/src/main/java/com/example/nemus/touchtest/ImageAdator.java b/app/src/main/java/com/example/nemus/touchtest/ImageAdator.java	(rejected hunks)
+@@ -199,20 +199,38 @@
+                                 pager = false;
+                                 //main.mViewPager.setPagingEnabled(pager);
+                             }
+-                            if((pager||touch)&&(((dx<0)&&right)||((dx>0)&&(!right)))) {
+-                                if(dxCal) {
+-                                    start.x = event.getX();
+-                                    dxCal = false;
+-                                }
+-                                dx = event.getX() - start.x;
+-                                main.mViewPager.fakeDragBy(dx);
+-                                Log.d("Scroll",dx+"");
+ 
+-                                touch = true;
+-                                return true;
+-                            }else {
+-                                matrix.postTranslate(dx, dy);
++                            if((pager||touch)) {
++                                if((((dx<0)&&right)||((dx>0)&&(!right)))||touch) {
++                                    if (dxCal) {
++                                        startDrag = event.getX();
++                                        dxCal = false;
++                                    }
++                                    //start.x = event.getX();
++                                    dx = event.getX() - startDrag;
++
++                                    if((((dx>0)&&right)||((dx<0)&&(!right)))){
++                                        Log.d("Scrolld", "out");
++                                        startDrag = event.getX();
++                                        //start.x = event.getX();
++                                        dx = event.getX() - startDrag;
++                                        main.mViewPager.endFakeDrag();
++                                        //main.mViewPager.beginFakeDrag();
++                                        pager=false;
++                                        touch=false;
++                                        //matrix.postTranslate(dx, dy);
++                                    }else {
++                                        main.mViewPager.fakeDragBy(dx);
++                                    }
++
++                                    Log.d("Scroll", dx + "/"+startDrag+"/"+start.x+"/"+event.getX());
++
++                                    touch = true;
++                                    return true;
++                                }
+                             }
++                                matrix.postTranslate(dx, dy);
++
+ 
+                             Log.d("dd",dx+"/"+dy);
+                         } else if (mode == ZOOM) {

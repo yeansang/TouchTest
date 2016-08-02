@@ -50,6 +50,7 @@ public class ImageAdator extends PagerAdapter {
     private Bitmap inview;
     private boolean inside = false;
     boolean pager = false;
+    float startDrag=0;
 
 
     public ImageAdator(LayoutInflater layoutInflater, MainActivity act, @Nullable Bitmap imageView){
@@ -66,7 +67,7 @@ public class ImageAdator extends PagerAdapter {
         Log.d("incount",position+"");
         View view = inflater.inflate(R.layout.pager_imageview,null);
 
-        ImageView imageView = (ImageView)view.findViewById(R.id.imageview);
+        final ImageView imageView = (ImageView)view.findViewById(R.id.imageview);
         Log.d("tag",position+""+view.toString());
         view.setTag(position);
         if(inside){
@@ -198,20 +199,34 @@ public class ImageAdator extends PagerAdapter {
                                 pager = false;
                                 //main.mViewPager.setPagingEnabled(pager);
                             }
-                            if((pager||touch)&&(((dx<0)&&right)||((dx>0)&&(!right)))) {
+                            if((!dxCal)&&(right&&(event.getRawX()>startDrag))){
+                                Log.d("Scroll",dxCal+"/"+right+"/"+event.getX()+"right over");
+                                pager = false;
+                                touch = false;
+                                dxCal = true;
+                                //main.mViewPager.endFakeDrag();
+                            }else if((!dxCal)&&((!right)&&(event.getRawX()<startDrag))){
+                                Log.d("Scroll","left over");
+                                pager = false;
+                                touch = false;
+                                dxCal = true;
+                                //main.mViewPager.endFakeDrag();
+                            }
+
+                            if((pager||touch)) {
                                 if(dxCal) {
-                                    start.x = event.getX();
+                                    startDrag = event.getX();
                                     dxCal = false;
                                 }
-                                dx = event.getX() - start.x;
-                                main.mViewPager.fakeDragBy(dx);
-                                Log.d("Scroll",dx+"");
+                                float drx = event.getX() - startDrag;
+                                main.mViewPager.fakeDragBy(drx);
+                                Log.d("Scroll",startDrag+"");
 
                                 touch = true;
-                                return true;
-                            }else {
-                                matrix.postTranslate(dx, dy);
+                                return false;
                             }
+                            matrix.postTranslate(dx, dy);
+
 
                             Log.d("dd",dx+"/"+dy);
                         } else if (mode == ZOOM) {
@@ -232,8 +247,11 @@ public class ImageAdator extends PagerAdapter {
                                 newRot = rotation(event);
                                 float r = newRot - d;
 
-                                matrix.postRotate(r, mid.x, mid.y);
+                                float ft[] = new float[9];
+                                originMatrix.getValues(ft);
+
                                 matrix.postScale(scale, scale,mid.x, mid.y);
+                                matrix.postRotate(r, mid.x, mid.y);
                                 matrix.postTranslate(mdx,mdy);
                                 Log.d("mid",mid.x+"/"+mid.y);
                                 midPoint(midStart,event, view);
