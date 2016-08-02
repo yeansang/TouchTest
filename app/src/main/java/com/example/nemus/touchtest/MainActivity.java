@@ -174,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onPageScrollStateChanged(int state) {
-                /*if((state == ViewPager.SCROLL_STATE_DRAGGING)) {
+                /*//if((state == ViewPager.SCROLL_STATE_DRAGGING)) {
 
                     imageView = (ImageView) mViewPager.findViewWithTag(mViewPager.getCurrentItem());
                     Matrix matrix = imageView.getImageMatrix();
@@ -188,10 +188,10 @@ public class MainActivity extends AppCompatActivity {
 
                     Log.d("pad", pa.right+"");
 
-                    if(pa.right) {
+                    if(pa.right&&pa.touch) {
                         ft[Matrix.MTRANS_X] += xsize - xmas;
                         Log.d("Scroll", "true");
-                    }else if(!pa.right){
+                    }else if((!pa.right)&&pa.touch){
                         ft[Matrix.MTRANS_X] += 0-xmin;
                         Log.d("Scroll", "false");
                     }
@@ -199,7 +199,7 @@ public class MainActivity extends AppCompatActivity {
                     matrix.setValues(ft);
                     imageView.setImageMatrix(matrix);
                     imageView.invalidate();
-                }*/
+               // }*/
             }
         });
 

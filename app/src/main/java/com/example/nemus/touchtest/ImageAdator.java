@@ -199,6 +199,7 @@ public class ImageAdator extends PagerAdapter {
                                 pager = false;
                                 //main.mViewPager.setPagingEnabled(pager);
                             }
+
                             if((!dxCal)&&(right&&(event.getRawX()>startDrag))){
                                 Log.d("Scroll",dxCal+"/"+right+"/"+event.getX()+"right over");
                                 pager = false;
@@ -215,20 +216,50 @@ public class ImageAdator extends PagerAdapter {
 
                             if((pager||touch)) {
                                 if(dxCal) {
+                                    if(right) {
+                                        //ft[Matrix.MTRANS_X] += xsize - xmas;
+                                        dx = xsize - xmas;
+                                        //matrix.postTranslate(xsize - xmas, dy);
+                                        Log.d("Scroll", "true");
+                                    }else if((!right)){
+                                        //ft[Matrix.MTRANS_X] += 0-xmin;
+                                        //matrix.postTranslate(0-xmin, dy);
+                                        dx = 0-xmin;
+                                        Log.d("Scroll", "false");
+                                    }
                                     startDrag = event.getX();
                                     dxCal = false;
                                 }
                                 float drx = event.getX() - startDrag;
                                 main.mViewPager.fakeDragBy(drx);
                                 Log.d("Scroll",startDrag+"");
-
                                 touch = true;
-                                return false;
                             }
-                            matrix.postTranslate(dx, dy);
+                            if(touch){
+                                float ft[] = new float[9];
+                                matrix.getValues(ft);
+                                Log.d("pad", right+"/"+touch);
+                                /*if(right) {
+                                    //ft[Matrix.MTRANS_X] += xsize - xmas;
+                                    dx = xsize - xmas;
+                                    //matrix.postTranslate(xsize - xmas, dy);
+                                    Log.d("Scroll", "true");
+                                }else if((!right)){
+                                    //ft[Matrix.MTRANS_X] += 0-xmin;
+                                    //matrix.postTranslate(0-xmin, dy);
+                                    dx = 0-xmin;
+                                    Log.d("Scroll", "false");
+                                }*/
+                                Log.d("pad",ft[Matrix.MTRANS_X]+"/"+ft[Matrix.MTRANS_Y]);
+                                //matrix.setValues(ft);
+                            }
 
+                            //else {
+                            Log.d("padd",dx+"");
+                                matrix.postTranslate(dx, dy);
+                            break;
+                            //}
 
-                            Log.d("dd",dx+"/"+dy);
                         } else if (mode == ZOOM) {
                             zoomToggle = true;
 
