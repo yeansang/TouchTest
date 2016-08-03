@@ -119,7 +119,7 @@ public class ImageAdator extends PagerAdapter {
                 float[] values = new float[9];
                 matrix.getValues(values);
 
-                float[] edge = matrixEdges(view, matrix);
+                float[] edge = matrixEdges(view, null);
 
                 Log.d("action", event.getAction()+"");
                 main.mViewPager.beginFakeDrag();
@@ -135,7 +135,7 @@ public class ImageAdator extends PagerAdapter {
 
                         Log.d("switch","1");
                         savedMatrix.set(matrix);
-                        start.set(event.getX(), event.getY());
+                        start.set(event.getRawX(), event.getY());
                         mode = DRAG;
                         lastEvent = null;
                         break;
@@ -161,13 +161,16 @@ public class ImageAdator extends PagerAdapter {
                         lastEvent = null;
                         main.mViewPager.endFakeDrag();
                         touch = false;
+                        right = false;
                         dxCal = true;
                         break;
                     case MotionEvent.ACTION_POINTER_UP:
                         Log.d("switch","3");
                         mode = NONE;
+                        main.mViewPager.endFakeDrag();
                         lastEvent = null;
                         touch = false;
+                        right = false;
                         dxCal = true;
                         break;
                     case MotionEvent.ACTION_MOVE:
@@ -178,6 +181,7 @@ public class ImageAdator extends PagerAdapter {
 
                             Log.d("switch","4");
                             matrix.set(savedMatrix);
+
                             float dx = event.getX() - start.x;
                             float dy = event.getY() - start.y;
 
@@ -185,80 +189,53 @@ public class ImageAdator extends PagerAdapter {
                             float xmin = madMin(edge[0],edge[2],edge[4],edge[6]);
                             float xsize = view.getWidth();
 
-                            Log.d("edge", xmas+"/"+xmin+"/"+xsize);
+                            Log.d("scroll",xmin+"x");
 
-                            if((0<xmin)||(xmas<(xsize))){
-                                Log.d("edge","true");
-                                pager = true;
-
-                                //main.mViewPager.setPagingEnabled(pager);
-                                if(0<xmin) right = false;
-                                if(xmas<xsize) right = true;
-                            }else{
-                                Log.d("edge","false");
-                                pager = false;
-                                //main.mViewPager.setPagingEnabled(pager);
-                            }
-
-                            if((!dxCal)&&(right&&(event.getRawX()>startDrag))){
-                                Log.d("Scroll",dxCal+"/"+right+"/"+event.getX()+"right over");
-                                pager = false;
+                            //if right edge in
+                            if((xmas<(xsize+15))||right){
+                                right = true;
                                 touch = false;
-                                dxCal = true;
-                                //main.mViewPager.endFakeDrag();
-                            }else if((!dxCal)&&((!right)&&(event.getRawX()<startDrag))){
-                                Log.d("Scroll","left over");
-                                pager = false;
-                                touch = false;
-                                dxCal = true;
-                                //main.mViewPager.endFakeDrag();
-                            }
-
-                            if((pager||touch)) {
                                 if(dxCal) {
-                                    if(right) {
-                                        //ft[Matrix.MTRANS_X] += xsize - xmas;
-                                        dx = xsize - xmas;
-                                        //matrix.postTranslate(xsize - xmas, dy);
-                                        Log.d("Scroll", "true");
-                                    }else if((!right)){
-                                        //ft[Matrix.MTRANS_X] += 0-xmin;
-                                        //matrix.postTranslate(0-xmin, dy);
-                                        dx = 0-xmin;
-                                        Log.d("Scroll", "false");
-                                    }
+                                    Log.d("scroll","1");
                                     startDrag = event.getX();
                                     dxCal = false;
                                 }
-                                float drx = event.getX() - startDrag;
-                                main.mViewPager.fakeDragBy(drx);
-                                Log.d("Scroll",startDrag+"");
+                                if(event.getRawX()>startDrag){
+                                    Log.d("scroll","2");
+                                    matrix.postTranslate(dx, dy);
+                                    //main.mViewPager.endFakeDrag();
+                                }else{
+                                    Log.d("scroll","3");
+                                    float drx = event.getX() - startDrag;
+                                    matrix.postTranslate(dx, dy);
+                                    main.mViewPager.fakeDragBy(drx);
+                                }
+                            }
+                            if((-15<xmin)||touch){ //if left edge in
                                 touch = true;
-                            }
-                            if(touch){
-                                float ft[] = new float[9];
-                                matrix.getValues(ft);
-                                Log.d("pad", right+"/"+touch);
-                                /*if(right) {
-                                    //ft[Matrix.MTRANS_X] += xsize - xmas;
-                                    dx = xsize - xmas;
-                                    //matrix.postTranslate(xsize - xmas, dy);
-                                    Log.d("Scroll", "true");
-                                }else if((!right)){
-                                    //ft[Matrix.MTRANS_X] += 0-xmin;
-                                    //matrix.postTranslate(0-xmin, dy);
-                                    dx = 0-xmin;
-                                    Log.d("Scroll", "false");
-                                }*/
-                                Log.d("pad",ft[Matrix.MTRANS_X]+"/"+ft[Matrix.MTRANS_Y]);
-                                //matrix.setValues(ft);
-                            }
+                                right = false;
+                                if(dxCal) {
+                                    Log.d("scroll","4");
+                                    startDrag = event.getX();
+                                    dxCal = false;
+                                }
+                                if(event.getRawX()<startDrag){
+                                    Log.d("scroll","5");
+                                    matrix.postTranslate(dx, dy);
+                                    //.mViewPager.endFakeDrag();
+                                }else{
+                                    Log.d("scroll","6");
+                                    float drx = event.getX() - startDrag;
+                                    matrix.postTranslate(dx, dy);
+                                    main.mViewPager.fakeDragBy(drx);
+                                }
 
-                            //else {
-                            Log.d("padd",dx+"");
+                            }
+                            if((!touch)&&(!right)){
+                                Log.d("scroll","7");
                                 matrix.postTranslate(dx, dy);
-                            break;
-                            //}
+                                startDrag = event.getX();
+                            }
 
                         } else if (mode == ZOOM) {
                             zoomToggle = true;
@@ -421,7 +398,7 @@ public class ImageAdator extends PagerAdapter {
         m.getValues(mat);
         Log.d("edge", r.right+"/"+r.bottom);
 
-        out[0] = mat[Matrix.MTRANS_X];
+        out[0] = mat[0]*r.left+mat[1]*r.top+mat[2]*1;
         out[1] = mat[Matrix.MTRANS_Y];
 
         out[2] = mat[0]*r.right+mat[1]*r.top+mat[2]*1;
