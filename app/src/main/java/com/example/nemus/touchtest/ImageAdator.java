@@ -1,7 +1,10 @@
 package com.example.nemus.touchtest;
 
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -51,6 +54,9 @@ public class ImageAdator extends PagerAdapter {
     private boolean inside = false;
     boolean pager = false;
     float startDrag=0;
+    float scrollDiffStart = 0;
+    RectF rf = new RectF();
+
 
 
     public ImageAdator(LayoutInflater layoutInflater, MainActivity act, @Nullable Bitmap imageView){
@@ -135,7 +141,7 @@ public class ImageAdator extends PagerAdapter {
 
                         Log.d("switch","1");
                         savedMatrix.set(matrix);
-                        start.set(event.getRawX(), event.getY());
+                        start.set(event.getX(), event.getY());
                         mode = DRAG;
                         lastEvent = null;
                         break;
@@ -180,62 +186,91 @@ public class ImageAdator extends PagerAdapter {
                         if (mode == DRAG) {
 
                             Log.d("switch","4");
-                            matrix.set(savedMatrix);
+                            //matrix.set(savedMatrix);
 
-                            float dx = event.getX() - start.x;
+                            float dx = event.getRawX() - start.x;
+                            start.x = event.getRawX();
                             float dy = event.getY() - start.y;
+                            start.y = event.getY();
 
                             float xmas = madMax(edge[0],edge[2],edge[4],edge[6]);
                             float xmin = madMin(edge[0],edge[2],edge[4],edge[6]);
                             float xsize = view.getWidth();
 
-                            Log.d("scroll",xmin+"x");
+                            Log.d("scroll",xmas+"right");
+                            Log.d("scroll",xmin+"left");
 
-                            //if right edge in
-                            if((xmas<(xsize+15))||right){
-                                right = true;
-                                touch = false;
-                                if(dxCal) {
-                                    Log.d("scroll","1");
-                                    startDrag = event.getX();
-                                    dxCal = false;
-                                }
-                                if(event.getRawX()>startDrag){
-                                    Log.d("scroll","2");
-                                    matrix.postTranslate(dx, dy);
-                                    //main.mViewPager.endFakeDrag();
-                                }else{
-                                    Log.d("scroll","3");
-                                    float drx = event.getX() - startDrag;
-                                    matrix.postTranslate(dx, dy);
-                                    main.mViewPager.fakeDragBy(drx);
-                                }
-                            }
-                            if((-15<xmin)||touch){ //if left edge in
-                                touch = true;
-                                right = false;
-                                if(dxCal) {
-                                    Log.d("scroll","4");
-                                    startDrag = event.getX();
-                                    dxCal = false;
-                                }
-                                if(event.getRawX()<startDrag){
-                                    Log.d("scroll","5");
-                                    matrix.postTranslate(dx, dy);
-                                    //.mViewPager.endFakeDrag();
-                                }else{
-                                    Log.d("scroll","6");
-                                    float drx = event.getX() - startDrag;
-                                    matrix.postTranslate(dx, dy);
-                                    main.mViewPager.fakeDragBy(drx);
-                                }
+                            int scrollMode = 0;
 
-                            }
-                            if((!touch)&&(!right)){
-                                Log.d("scroll","7");
-                                matrix.postTranslate(dx, dy);
+                            if (dxCal) {
                                 startDrag = event.getX();
+                                scrollDiffStart = event.getRawX();
+                                dxCal = false;
                             }
+
+                            if(xmas<(xsize)){
+                                scrollMode = 1;//if right edge in
+                                if(event.getRawX()>startDrag){
+                                    scrollMode = 3;
+                                }
+                            }else if(-10<xmin){
+                                scrollMode = 2;//if left edge in
+                                if(event.getRawX()<startDrag){
+                                    scrollMode = 4;
+                                }
+                            }
+
+
+                            switch(scrollMode){
+                                case 1: {
+                                    Log.d("Scrollpoint", "1");
+
+                                    //matrix.postTranslate(-dx, dy);
+                                    float ft[] = new float[9];
+                                    matrix.getValues(ft);
+
+                                    float drx = event.getX() - startDrag;
+                                    //startDrag = event.getRawX();
+                                    float ddx = xsize - xmas;
+                                    Log.d("scrollmax", ddx + "ddx");
+                                    Log.d("scrollmax", drx + "drx");
+                                    //dx = dx + ddx;
+                                    main.mViewPager.fakeDragBy(drx);
+                                }
+                                    break;
+
+                                case 2: {
+                                    Log.d("Scrollpoint", "3");
+
+                                    //matrix.postTranslate(-dx, dy);
+                                    float ft[] = new float[9];
+                                    matrix.getValues(ft);
+
+                                    float drx = event.getX() - startDrag;
+                                    //startDrag = event.getRawX();
+                                    float ddx = 0 - xmin;
+                                    Log.d("scrollmax", ddx + "ddx");
+                                    Log.d("scrollmax", drx + "drx");
+                                    //dx = dx + ddx;
+                                    main.mViewPager.fakeDragBy(drx);
+                                }
+                                    break;
+
+                                /*case 4:
+                                    Log.d("Scrollpoint","4");
+                                    Log.d("scroll","left edge");
+                                    dxCal = true;
+                                    //dx = dx - ddx;
+                                    break;*/
+
+                                case 3:
+                                case 4:
+                                default:
+                                    matrix.postTranslate(dx, dy);
+                                    dxCal = true;
+                                    break;
+                            }
+
 
                         } else if (mode == ZOOM) {
                             zoomToggle = true;
@@ -385,7 +420,7 @@ public class ImageAdator extends PagerAdapter {
     }
 
     public float[] matrixEdges(ImageView iv, @Nullable Matrix matrix){
-        Rect r = iv.getDrawable().getBounds();
+        RectF r = new RectF(0,0,iv.getDrawable().getIntrinsicWidth(),iv.getDrawable().getIntrinsicHeight());
         Matrix m;
         if(matrix == null){
             m = iv.getImageMatrix();
@@ -395,20 +430,20 @@ public class ImageAdator extends PagerAdapter {
         float out[] = new float[8];
         float mat[] = new float[9];
 
-        m.getValues(mat);
+        m.mapRect(r);
         Log.d("edge", r.right+"/"+r.bottom);
 
-        out[0] = mat[0]*r.left+mat[1]*r.top+mat[2]*1;
-        out[1] = mat[Matrix.MTRANS_Y];
+        out[0] = r.left;
+        out[1] = r.top;
 
-        out[2] = mat[0]*r.right+mat[1]*r.top+mat[2]*1;
-        out[3] = mat[3]*r.right+mat[4]*r.top+mat[5]*1 -65;
+        out[2] = r.right;
+        out[3] = r.top;
 
-        out[4] = mat[0]*r.right+mat[1]*r.bottom+mat[2]*1;
-        out[5] = mat[3]*r.right+mat[4]*r.bottom+mat[5]*1 -65;
+        out[4] = r.right;
+        out[5] = r.bottom;
 
-        out[6] = mat[0]*r.left+mat[1]*r.bottom+mat[2]*1;
-        out[7] = mat[3]*r.left+mat[4]*r.bottom+mat[5]*1 -65;
+        out[6] = r.left;
+        out[7] = r.bottom;
 
         return out;
     }
