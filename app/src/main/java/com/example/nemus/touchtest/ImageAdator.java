@@ -56,6 +56,8 @@ public class ImageAdator extends PagerAdapter {
     float startDrag=0;
     float scrollDiffStart = 0;
     RectF rf = new RectF();
+    float rightEdge=0;
+    float leftEdge=0;
 
 
 
@@ -130,6 +132,10 @@ public class ImageAdator extends PagerAdapter {
                 Log.d("action", event.getAction()+"");
                 main.mViewPager.beginFakeDrag();
 
+                float xmas = madMax(edge[0],edge[2],edge[4],edge[6]);
+                float xmin = madMin(edge[0],edge[2],edge[4],edge[6]);
+                float xsize = view.getWidth();
+
                 switch (event.getAction() & MotionEvent.ACTION_MASK) {
                     case MotionEvent.ACTION_DOWN:
                         if(toggle){
@@ -138,6 +144,11 @@ public class ImageAdator extends PagerAdapter {
                             originMatrix.setValues(value);
                             toggle = false;
                         }
+
+                        rightEdge = event.getRawX() - (xmas - xsize);
+                        leftEdge = event.getRawX() + (-xmin);
+
+                        Log.d("Scrollpoint",rightEdge+"/"+leftEdge);
 
                         Log.d("switch","1");
                         savedMatrix.set(matrix);
@@ -193,13 +204,6 @@ public class ImageAdator extends PagerAdapter {
                             float dy = event.getY() - start.y;
                             start.y = event.getY();
 
-                            float xmas = madMax(edge[0],edge[2],edge[4],edge[6]);
-                            float xmin = madMin(edge[0],edge[2],edge[4],edge[6]);
-                            float xsize = view.getWidth();
-
-                            Log.d("scroll",xmas+"right");
-                            Log.d("scroll",xmin+"left");
-
                             int scrollMode = 0;
 
                             if (dxCal) {
@@ -207,19 +211,13 @@ public class ImageAdator extends PagerAdapter {
                                 scrollDiffStart = event.getRawX();
                                 dxCal = false;
                             }
+                            Log.d("Scrollpo",event.getRawX()+"/"+rightEdge);
 
-                            if(xmas<(xsize)){
-                                scrollMode = 1;//if right edge in
-                                if(event.getRawX()>startDrag){
-                                    scrollMode = 3;
-                                }
-                            }else if(-10<xmin){
-                                scrollMode = 2;//if left edge in
-                                if(event.getRawX()<startDrag){
-                                    scrollMode = 4;
-                                }
+                            if((rightEdge<event.getRawX())&&(event.getRawX()<leftEdge)){
+                                scrollMode = 0;
+                            }else{
+                                scrollMode = 1;
                             }
-
 
                             switch(scrollMode){
                                 case 1: {
@@ -231,11 +229,11 @@ public class ImageAdator extends PagerAdapter {
 
                                     float drx = event.getX() - startDrag;
                                     //startDrag = event.getRawX();
-                                    float ddx = xsize - xmas;
-                                    Log.d("scrollmax", ddx + "ddx");
+
+                                    //Log.d("scrollmax", ddx + "ddx");
                                     Log.d("scrollmax", drx + "drx");
                                     //dx = dx + ddx;
-                                    main.mViewPager.fakeDragBy(drx);
+                                    main.mViewPager.fakeDragBy(dx);
                                 }
                                     break;
 
@@ -248,24 +246,18 @@ public class ImageAdator extends PagerAdapter {
 
                                     float drx = event.getX() - startDrag;
                                     //startDrag = event.getRawX();
-                                    float ddx = 0 - xmin;
-                                    Log.d("scrollmax", ddx + "ddx");
+
+                                    //Log.d("scrollmax", ddx + "ddx");
                                     Log.d("scrollmax", drx + "drx");
                                     //dx = dx + ddx;
-                                    main.mViewPager.fakeDragBy(drx);
+                                    main.mViewPager.fakeDragBy(dx);
                                 }
                                     break;
-
-                                /*case 4:
-                                    Log.d("Scrollpoint","4");
-                                    Log.d("scroll","left edge");
-                                    dxCal = true;
-                                    //dx = dx - ddx;
-                                    break;*/
 
                                 case 3:
                                 case 4:
                                 default:
+                                    main.mViewPager.endFakeDrag();
                                     matrix.postTranslate(dx, dy);
                                     dxCal = true;
                                     break;
