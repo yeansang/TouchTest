@@ -518,9 +518,9 @@ public class ImageAdator extends PagerAdapter {
                         t = t > 1.0f ? 1.0f : t;
                         Log.d("double", t + "");
 
-                        matrix.postTranslate(diffX/100,diffY/100);
-                        matrix.postScale(diffScale/100,diffScale/100);
-                        matrix.postRotate(diffAngle/100);
+                        matrix.postTranslate(value1[Matrix.MTRANS_X]*t,value1[Matrix.MTRANS_Y]*t);
+                        //matrix.postScale(diffScale*t,diffScale*t);
+                        //matrix.postRotate(diffAngle*t);
 
                         //matrix.setValues(ft);
 
