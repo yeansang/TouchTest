@@ -216,6 +216,14 @@ public class ImageAdator extends PagerAdapter {
                             if((rightEdge<event.getRawX())&&(event.getRawX()<leftEdge)){
                                 scrollMode = 0;
                             }else{
+                                if((rightEdge>event.getRawX())){
+                                    float ddx = xsize - xmas;
+                                    matrix.postTranslate(ddx,0);
+                                }
+                                if((leftEdge<event.getRawX())){
+                                    float ddx = 0-xmin;
+                                    matrix.postTranslate(ddx,0);
+                                }
                                 scrollMode = 1;
                             }
 
