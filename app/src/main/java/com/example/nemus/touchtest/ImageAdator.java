@@ -476,7 +476,7 @@ public class ImageAdator extends PagerAdapter {
         public boolean onDoubleTap(final MotionEvent motionEvent) {
             final Matrix matrix = imageView.getImageMatrix();
             final long startTime = System.currentTimeMillis();
-            final long duration = 400;
+            final long duration = 1000;
 
             final float[] value1 = new float[9];
             final float[] value2 = new float[9];
@@ -491,12 +491,25 @@ public class ImageAdator extends PagerAdapter {
                 zoomToggle = true;
             }
 
+            // calculate real scale
+            float scalex = value2[Matrix.MSCALE_X];
+            float skewy = value2[Matrix.MSKEW_Y];
+            float mScale = (float) Math.sqrt(scalex * scalex + skewy * skewy);
+
+            // calculate the degree of rotation
+            float mAngle = Math.round(Math.atan2(value2[Matrix.MSKEW_X], value2[Matrix.MSCALE_X]) * (180 / Math.PI));
+
+            Log.d("rotation",mScale+"/"+mAngle);
+
+            float origScale = (float) Math.sqrt(value1[Matrix.MSCALE_X]*value1[Matrix.MSCALE_X]+value1[Matrix.MSKEW_Y]*value1[Matrix.MSKEW_Y]);
+            float origAngle = 0;
 
             final float[] value = new float[9];
 
-            for(int i=0;i<9;i++){
-                value[i] = value1[i]-value2[i];
-            }
+            final float diffX = value1[Matrix.MTRANS_X] - value2[Matrix.MTRANS_X];
+            final float diffY = value1[Matrix.MTRANS_Y] - value2[Matrix.MTRANS_Y];
+            final float diffScale = origScale - mScale;
+            final float diffAngle = origAngle - mAngle;
 
             imageView.post(new Runnable() {
                     @Override
@@ -504,17 +517,12 @@ public class ImageAdator extends PagerAdapter {
                         float t = (float) (System.currentTimeMillis() - startTime) / duration;
                         t = t > 1.0f ? 1.0f : t;
                         Log.d("double", t + "");
-                        float[] ft = new float[9];
 
-                        for (int i = 0; i < 9; i++) {
-                            ft[i] = value2[i] + value[i] * t;
-                        }
+                        matrix.postTranslate(diffX/100,diffY/100);
+                        matrix.postScale(diffScale/100,diffScale/100);
+                        matrix.postRotate(diffAngle/100);
 
-                        Log.e("Value", "value X : " + ft[0] + "/" + ft[1] + "/" + ft[2]);
-                        Log.e("Value", "value Y : " + ft[3] + "/" + ft[4] + "/" + ft[5]);
-                        Log.e("Value", "value per : " + ft[6] + "/" + ft[7] + "/" + ft[8]);
-
-                        matrix.setValues(ft);
+                        //matrix.setValues(ft);
 
                         imageView.setImageMatrix(matrix);
                         imageView.invalidate();
