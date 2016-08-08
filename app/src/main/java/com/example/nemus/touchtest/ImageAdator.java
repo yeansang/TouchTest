@@ -501,13 +501,12 @@ public class ImageAdator extends PagerAdapter {
         public boolean onDoubleTap(final MotionEvent motionEvent) {
             final Matrix matrix = imageView.getImageMatrix();
             final long startTime = System.currentTimeMillis();
-            final long duration = 1000;
+            final long duration = 400;
 
             final float[] value1 = new float[9];
             final float[] value2 = new float[9];
             matrix.getValues(value2);
-            originMatrix.getValues(value1);
-            /*if (zoomToggle) {
+            if (zoomToggle) {
                 originMatrix.getValues(value1);
                 zoomToggle = false;
             } else {
@@ -516,7 +515,7 @@ public class ImageAdator extends PagerAdapter {
                 matrix.getValues(value1);
                 matrix.setValues(value2);
                 zoomToggle = true;
-            }*/
+            }
 
             // calculate real scale
             float scalex = value2[Matrix.MSCALE_X];
@@ -555,6 +554,7 @@ public class ImageAdator extends PagerAdapter {
             Log.d("matS", "==================");
 
             //matrix.postScale(diffScale, diffScale,500,500);
+            //matrix.postTranslate(diffX,diffY);
 
 
             imageView.post(new Runnable() {
@@ -572,12 +572,16 @@ public class ImageAdator extends PagerAdapter {
                         ft[Matrix.MTRANS_X] = value2[Matrix.MTRANS_X] + (diffX*t);
                         ft[Matrix.MTRANS_Y] = value2[Matrix.MTRANS_Y] + (diffY*t);
                         matrix.setValues(ft);
-                        //matrix.postTranslate(diffX*t,diffY*t);
+                        //matrix.postTranslate(diffX*t, diffY*t);
 
                         imageView.setImageMatrix(matrix);
                         imageView.invalidate();
                         if (t < 1f) {
                             imageView.post(this);
+                        }else{
+                            matrix.setValues(value1);
+                            imageView.setImageMatrix(matrix);
+                            imageView.invalidate();
                         }
                     }
             });
