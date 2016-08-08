@@ -21,6 +21,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import Jama.SingularValueDecomposition;
+
 /**
  * Created by nemus on 2016-07-19.
  */
@@ -221,7 +223,7 @@ public class ImageAdator extends PagerAdapter {
                                     matrix.postTranslate(ddx,0);
                                 }
                                 if((leftEdge<event.getRawX())){
-                                    float ddx = 0-xmin;
+                                    float ddx = 0 - xmin;
                                     matrix.postTranslate(ddx,0);
                                 }
                                 scrollMode = 1;
@@ -456,12 +458,12 @@ public class ImageAdator extends PagerAdapter {
         return Math.min(Math.min(a,b),Math.min(c,d));
     }
 
-    class CustomDoubletap implements GestureDetector.OnDoubleTapListener{
+    class CustomDoubletap implements GestureDetector.OnDoubleTapListener {
         ImageView imageView;
-        int[] loc = new int[]{0,0};
+        int[] loc = new int[]{0, 0};
 
-        CustomDoubletap(View view){
-            this.imageView = (ImageView)view;
+        CustomDoubletap(View view) {
+            this.imageView = (ImageView) view;
             view.getLocationOnScreen(loc);
         }
 
@@ -472,7 +474,30 @@ public class ImageAdator extends PagerAdapter {
             return true;
         }
 
-        @Override
+        public Matrix castMatrix(Jama.Matrix m){
+            double[][] arr = m.getArray();
+            float[] out = new float[]{
+                    (float)arr[0][0], (float)arr[0][1], (float)arr[0][2],
+                    (float)arr[1][0], (float)arr[1][1], (float)arr[1][2],
+                    (float)arr[2][0], (float)arr[2][1], (float)arr[2][2]
+            };
+            Matrix outm = new Matrix();
+            outm.setValues(out);
+            return outm;
+        }
+
+        public Jama.Matrix castMatrix(Matrix m){
+            float[] arr = new float[9];
+            m.getValues(arr);
+            double[][] out = new double[][]{
+                    {(double)arr[0], (double)arr[1], (double)arr[2]},
+                    {(double)arr[3], (double)arr[4], (double)arr[5]},
+                    {(double)arr[6], (double)arr[7], (double)arr[8]}
+            };
+            Jama.Matrix outm = new Jama.Matrix(out,3,3);
+            return outm;
+        }
+
         public boolean onDoubleTap(final MotionEvent motionEvent) {
             final Matrix matrix = imageView.getImageMatrix();
             final long startTime = System.currentTimeMillis();
@@ -481,15 +506,17 @@ public class ImageAdator extends PagerAdapter {
             final float[] value1 = new float[9];
             final float[] value2 = new float[9];
             matrix.getValues(value2);
-            if(zoomToggle) {
+            originMatrix.getValues(value1);
+            /*if (zoomToggle) {
                 originMatrix.getValues(value1);
-                zoomToggle =false;
-            }else{
+                zoomToggle = false;
+            } else {
                 matrix.getValues(value1);
-                matrix.postScale(1.0f/value1[Matrix.MSCALE_X],1.0f/value1[Matrix.MSCALE_Y],motionEvent.getRawX(),motionEvent.getRawY());
+                matrix.postScale(1.0f / value1[Matrix.MSCALE_X], 1.0f / value1[Matrix.MSCALE_Y], motionEvent.getRawX(), motionEvent.getRawY());
                 matrix.getValues(value1);
+                matrix.setValues(value2);
                 zoomToggle = true;
-            }
+            }*/
 
             // calculate real scale
             float scalex = value2[Matrix.MSCALE_X];
@@ -499,17 +526,36 @@ public class ImageAdator extends PagerAdapter {
             // calculate the degree of rotation
             float mAngle = Math.round(Math.atan2(value2[Matrix.MSKEW_X], value2[Matrix.MSCALE_X]) * (180 / Math.PI));
 
-            Log.d("rotation",mScale+"/"+mAngle);
+            Log.d("rotation", mScale + "/" + mAngle);
 
-            float origScale = (float) Math.sqrt(value1[Matrix.MSCALE_X]*value1[Matrix.MSCALE_X]+value1[Matrix.MSKEW_Y]*value1[Matrix.MSKEW_Y]);
+            float origScale = (float) Math.sqrt(value1[Matrix.MSCALE_X] * value1[Matrix.MSCALE_X] + value1[Matrix.MSKEW_Y] * value1[Matrix.MSKEW_Y]);
             float origAngle = 0;
-
-            final float[] value = new float[9];
 
             final float diffX = value1[Matrix.MTRANS_X] - value2[Matrix.MTRANS_X];
             final float diffY = value1[Matrix.MTRANS_Y] - value2[Matrix.MTRANS_Y];
-            final float diffScale = origScale - mScale;
+            final float diffScale = 1f-(origScale/mScale);
             final float diffAngle = origAngle - mAngle;
+
+            Log.d("doubletap", diffX + "/" + diffY);
+            Log.d("doubletap", diffScale + "/" + diffAngle);
+            Log.d("doubletap", "===================");
+            Jama.Matrix jmat = new Jama.Matrix(new double[][]{
+                    {value1[0], value1[1], value1[2]},
+                    {value1[3], value1[4], value1[5]},
+                    {value1[6], value1[7], value1[8]}
+            });
+
+            SingularValueDecomposition svd = jmat.svd();
+
+            Jama.Matrix v = svd.getV();
+            double sd[][] = v.getArray();
+            for (int i = 0; i < 3; i++) {
+                Log.d("matS", sd[i][0] + "/" + sd[i][1] + "/" + sd[i][2]);
+            }
+            Log.d("matS", "==================");
+
+            //matrix.postScale(diffScale, diffScale,500,500);
+
 
             imageView.post(new Runnable() {
                     @Override
@@ -517,12 +563,16 @@ public class ImageAdator extends PagerAdapter {
                         float t = (float) (System.currentTimeMillis() - startTime) / duration;
                         t = t > 1.0f ? 1.0f : t;
                         Log.d("double", t + "");
+                        matrix.setValues(value2);
 
-                        matrix.postTranslate(value1[Matrix.MTRANS_X]*t,value1[Matrix.MTRANS_Y]*t);
-                        //matrix.postScale(diffScale*t,diffScale*t);
-                        //matrix.postRotate(diffAngle*t);
-
-                        //matrix.setValues(ft);
+                        matrix.postScale(1f+(-diffScale*t), 1f+(-diffScale*t),imageView.getWidth()/2,imageView.getHeight()/2);
+                        matrix.postRotate(-diffAngle*t,imageView.getWidth()/2,imageView.getHeight()/2);
+                        float[] ft = new float[9];
+                        matrix.getValues(ft);
+                        ft[Matrix.MTRANS_X] = value2[Matrix.MTRANS_X] + (diffX*t);
+                        ft[Matrix.MTRANS_Y] = value2[Matrix.MTRANS_Y] + (diffY*t);
+                        matrix.setValues(ft);
+                        //matrix.postTranslate(diffX*t,diffY*t);
 
                         imageView.setImageMatrix(matrix);
                         imageView.invalidate();
@@ -531,7 +581,6 @@ public class ImageAdator extends PagerAdapter {
                         }
                     }
             });
-
 
             return false;
         }
