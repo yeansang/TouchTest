@@ -1,26 +1,25 @@
 package com.example.nemus.touchtest;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.support.annotation.Nullable;
-import android.support.v4.view.PagerAdapter;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageView;
 
 /**
- * Created by nemus on 2016-07-19.
+ * Created by nemus on 2016-08-08.
  */
-public class ImageAdator extends PagerAdapter {
+public class PicView extends ImageView {
 
     LayoutInflater inflater;
-    MainActivity main;
     private boolean zoomToggle = false;
     private boolean toggle = true;
     public boolean right = false;
@@ -51,33 +50,10 @@ public class ImageAdator extends PagerAdapter {
     float rightEdge=0;
     float leftEdge=0;
 
-
-
-    public ImageAdator(LayoutInflater layoutInflater, MainActivity act, @Nullable Bitmap imageView){
-        this.inflater = layoutInflater;
-        this.main = act;
-        if(imageView != null) {
-            this.inview = imageView;
-            inside = true;
-        }
-    }
-
-    @Override
-    public Object instantiateItem(ViewGroup container, final int position){
-        Log.d("incount",position+"");
-        View view = inflater.inflate(R.layout.pager_imageview,null);
-
-        final ImageView imageView = (ImageView)view.findViewById(R.id.imageview);
-        Log.d("tag",position+""+view.toString());
-        view.setTag(position);
-        if(inside){
-            imageView.setImageBitmap(inview);
-        }else {
-            imageView.setImageResource(R.drawable.image1 + position);
-        }
-
-        view.setOnTouchListener(new View.OnTouchListener() {
-            private GestureDetector gestureDetector = new GestureDetector(main.getApplicationContext(), new GestureDetector.OnGestureListener() {
+    public PicView(Context context) {
+        super(context);
+        this.setOnTouchListener(new View.OnTouchListener() {
+            private GestureDetector gestureDetector = new GestureDetector(new GestureDetector.OnGestureListener() {
                 @Override
                 public boolean onDown(MotionEvent motionEvent) {
                     return false;
@@ -122,7 +98,7 @@ public class ImageAdator extends PagerAdapter {
                 float[] edge = matrixEdges(view, null);
 
                 Log.d("action", event.getAction()+"");
-                main.mViewPager.beginFakeDrag();
+                //main.mViewPager.beginFakeDrag();
 
                 float xmas = madMax(edge[0],edge[2],edge[4],edge[6]);
                 float xmin = madMin(edge[0],edge[2],edge[4],edge[6]);
@@ -168,7 +144,6 @@ public class ImageAdator extends PagerAdapter {
                     case MotionEvent.ACTION_CANCEL:
                         mode = NONE;
                         lastEvent = null;
-                        main.mViewPager.endFakeDrag();
                         touch = false;
                         right = false;
                         dxCal = true;
@@ -176,7 +151,6 @@ public class ImageAdator extends PagerAdapter {
                     case MotionEvent.ACTION_POINTER_UP:
                         Log.d("switch","3");
                         mode = NONE;
-                        main.mViewPager.endFakeDrag();
                         lastEvent = null;
                         touch = false;
                         right = false;
@@ -222,36 +196,25 @@ public class ImageAdator extends PagerAdapter {
                             switch(scrollMode){
                                 case 1: {
                                     Log.d("Scrollpoint", "1");
-
                                     float ft[] = new float[9];
                                     matrix.getValues(ft);
-
                                     float drx = event.getX() - startDrag;
-
                                     Log.d("scrollmax", drx + "drx");
-
-                                    main.mViewPager.fakeDragBy(dx);
                                 }
-                                    break;
+                                break;
 
                                 case 2: {
                                     Log.d("Scrollpoint", "3");
-
                                     float ft[] = new float[9];
                                     matrix.getValues(ft);
-
                                     float drx = event.getX() - startDrag;
-
                                     Log.d("scrollmax", drx + "drx");
-
-                                    main.mViewPager.fakeDragBy(dx);
                                 }
-                                    break;
+                                break;
 
                                 case 3:
                                 case 4:
                                 default:
-                                    main.mViewPager.endFakeDrag();
                                     matrix.postTranslate(dx, dy);
                                     dxCal = true;
                                     break;
@@ -293,21 +256,12 @@ public class ImageAdator extends PagerAdapter {
                 view.setImageMatrix(matrix);
                 view.invalidate();
 
-                Log.e("Value1", "value X : "+values[0]+"/"+values[1]+"/"+values[2]);
-                Log.e("Value1", "value Y : "+values[3]+"/"+values[4]+"/"+values[5]);
-                Log.e("Value1", "value per : "+values[6]+"/"+values[7]+"/"+values[8]);
-
                 RectF point = new RectF();
                 matrix.mapRect(point);
-
-                Log.d("point", point.top+"/"+point.left);
-                Log.d("point", point.bottom+"/"+point.right);
 
                 CustomDoubletap cd = new CustomDoubletap(view);
                 gestureDetector.setOnDoubleTapListener(cd);
                 gestureDetector.onTouchEvent(event);
-
-                Log.d("touch",event.getX()+"/"+event.getY());
 
                 return true;
             }
@@ -341,46 +295,14 @@ public class ImageAdator extends PagerAdapter {
                 return (float) Math.toDegrees(radians);
             }
         });
-
-        container.addView(view);
-        return view;
     }
 
-
-    @Override
-    public CharSequence getPageTitle(int pos){
-        toggle = true;
-        if(inside) return "image";
-        switch (pos){
-            case 0:
-                return "sample color";
-            case 1:
-                return "6";
-            case 2:
-                return "42";
-            case 3:
-                return "고추밭";
-            case 4:
-                return "고추밭";
-            default:
-                return null;
-        }
+    public PicView(Context context, AttributeSet attrs) {
+        super(context, attrs);
     }
 
-    @Override
-    public void destroyItem(ViewGroup container, int pos, Object obj){
-        container.removeView((View)obj);
-    }
-
-    @Override
-    public int getCount() {
-        if(inside) return 1;
-        return 5;
-    }
-
-    @Override
-    public boolean isViewFromObject(View view, Object object) {
-        return view==object;
+    public PicView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
     }
 
     public int[] getRowPoint(View v,MotionEvent ev, int index){
@@ -410,6 +332,7 @@ public class ImageAdator extends PagerAdapter {
             m = matrix;
         }
         float out[] = new float[8];
+        float mat[] = new float[9];
 
         m.mapRect(r);
         Log.d("edge", r.right+"/"+r.bottom);
@@ -449,7 +372,6 @@ public class ImageAdator extends PagerAdapter {
 
         @Override
         public boolean onSingleTapConfirmed(MotionEvent motionEvent) {
-            main.toggle();
             return true;
         }
 
@@ -461,7 +383,6 @@ public class ImageAdator extends PagerAdapter {
             final float[] value1 = new float[9];
             final float[] value2 = new float[9];
             matrix.getValues(value2);
-
             if (zoomToggle) {
                 originMatrix.getValues(value1);
                 zoomToggle = false;
@@ -499,32 +420,32 @@ public class ImageAdator extends PagerAdapter {
             //matrix.postTranslate(diffX,diffY);
 
             imageView.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        float t = (float) (System.currentTimeMillis() - startTime) / duration;
-                        t = t > 1.0f ? 1.0f : t;
-                        Log.d("double", t + "");
-                        matrix.setValues(value2);
+                @Override
+                public void run() {
+                    float t = (float) (System.currentTimeMillis() - startTime) / duration;
+                    t = t > 1.0f ? 1.0f : t;
+                    Log.d("double", t + "");
+                    matrix.setValues(value2);
 
-                        matrix.postScale(1f+(-diffScale*t), 1f+(-diffScale*t),imageView.getWidth()/2,imageView.getHeight()/2);
-                        matrix.postRotate(-diffAngle*t,imageView.getWidth()/2,imageView.getHeight()/2);
-                        float[] ft = new float[9];
-                        matrix.getValues(ft);
-                        ft[Matrix.MTRANS_X] = value2[Matrix.MTRANS_X] + (diffX*t);
-                        ft[Matrix.MTRANS_Y] = value2[Matrix.MTRANS_Y] + (diffY*t);
-                        matrix.setValues(ft);
-                        //matrix.postTranslate(diffX*t, diffY*t);
+                    matrix.postScale(1f+(-diffScale*t), 1f+(-diffScale*t),imageView.getWidth()/2,imageView.getHeight()/2);
+                    matrix.postRotate(-diffAngle*t,imageView.getWidth()/2,imageView.getHeight()/2);
+                    float[] ft = new float[9];
+                    matrix.getValues(ft);
+                    ft[Matrix.MTRANS_X] = value2[Matrix.MTRANS_X] + (diffX*t);
+                    ft[Matrix.MTRANS_Y] = value2[Matrix.MTRANS_Y] + (diffY*t);
+                    matrix.setValues(ft);
+                    //matrix.postTranslate(diffX*t, diffY*t);
 
+                    imageView.setImageMatrix(matrix);
+                    imageView.invalidate();
+                    if (t < 1f) {
+                        imageView.post(this);
+                    }else{
+                        matrix.setValues(value1);
                         imageView.setImageMatrix(matrix);
                         imageView.invalidate();
-                        if (t < 1f) {
-                            imageView.post(this);
-                        }else{
-                            matrix.setValues(value1);
-                            imageView.setImageMatrix(matrix);
-                            imageView.invalidate();
-                        }
                     }
+                }
             });
 
             return false;
