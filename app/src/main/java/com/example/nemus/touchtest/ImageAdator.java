@@ -208,15 +208,20 @@ public class ImageAdator extends PagerAdapter {
                             if((rightEdge<event.getRawX())&&(event.getRawX()<leftEdge)){
                                 scrollMode = 0;
                             }else{
-                                if((rightEdge>event.getRawX())){
-                                    float ddx = xsize - xmas;
-                                    matrix.postTranslate(ddx,0);
+                                if((xmin>0)&&(xmas<xsize)){
+                                    scrollMode = 3;
+                                }else {
+                                    if ((rightEdge > event.getRawX())) {
+                                        float ddx = xsize - xmas;
+                                        matrix.postTranslate(ddx, 0);
+                                        scrollMode = 1;
+                                    }
+                                    if ((leftEdge < event.getRawX())) {
+                                        float ddx = 0 - xmin;
+                                        matrix.postTranslate(ddx, 0);
+                                        scrollMode = 1;
+                                    }
                                 }
-                                if((leftEdge<event.getRawX())){
-                                    float ddx = 0 - xmin;
-                                    matrix.postTranslate(ddx,0);
-                                }
-                                scrollMode = 1;
                             }
 
                             switch(scrollMode){
@@ -248,7 +253,12 @@ public class ImageAdator extends PagerAdapter {
                                 }
                                     break;
 
-                                case 3:
+                                case 3:{
+                                    Log.d("Scrollpoint", "4");
+                                    main.mViewPager.fakeDragBy(dx);
+                                }
+                                break;
+
                                 case 4:
                                 default:
                                     main.mViewPager.endFakeDrag();
@@ -441,6 +451,8 @@ public class ImageAdator extends PagerAdapter {
         ImageView imageView;
         int[] loc = new int[]{0, 0};
 
+        int i = 0;
+
         CustomDoubletap(View view) {
             this.imageView = (ImageView) view;
             view.getLocationOnScreen(loc);
@@ -473,6 +485,12 @@ public class ImageAdator extends PagerAdapter {
                 zoomToggle = true;
             }
 
+            Matrix temp = new Matrix();
+            temp.setValues(value1);
+
+            float nowPoint[] = matrixEdges(imageView,null);
+            float origPoint[] = matrixEdges(imageView,temp);
+
             // calculate real scale
             float scalex = value2[Matrix.MSCALE_X];
             float skewy = value2[Matrix.MSKEW_Y];
@@ -488,6 +506,8 @@ public class ImageAdator extends PagerAdapter {
 
             final float diffX = value1[Matrix.MTRANS_X] - value2[Matrix.MTRANS_X];
             final float diffY = value1[Matrix.MTRANS_Y] - value2[Matrix.MTRANS_Y];
+            final float diffcX = (origPoint[0]+((origPoint[2]-origPoint[0])/2)) - (nowPoint[0]+((nowPoint[2]-nowPoint[0])/2));
+            final float diffcY = (origPoint[1]+((origPoint[5]-origPoint[1])/2)) - (nowPoint[1]+((nowPoint[5]-nowPoint[1])/2));
             final float diffScale = 1f-(origScale/mScale);
             final float diffAngle = origAngle - mAngle;
 
@@ -504,19 +524,35 @@ public class ImageAdator extends PagerAdapter {
                         float t = (float) (System.currentTimeMillis() - startTime) / duration;
                         t = t > 1.0f ? 1.0f : t;
                         Log.d("double", t + "");
-                        matrix.setValues(value2);
 
-                        matrix.postScale(1f+(-diffScale*t), 1f+(-diffScale*t),imageView.getWidth()/2,imageView.getHeight()/2);
-                        matrix.postRotate(-diffAngle*t,imageView.getWidth()/2,imageView.getHeight()/2);
                         float[] ft = new float[9];
+
+                        float[] edge = matrixEdges(imageView,matrix);
+                        matrix.setValues(value2);
+                        float[] edgeEnd = matrixEdges(imageView,matrix);
                         matrix.getValues(ft);
-                        ft[Matrix.MTRANS_X] = value2[Matrix.MTRANS_X] + (diffX*t);
+
+                        //ft[Matrix.MTRANS_X] = ft[Matrix.MTRANS_X]-(edge[0]+((edge[2]-edge[0])/2)) ;
+                        //ft[Matrix.MTRANS_Y] = ft[Matrix.MTRANS_Y]-(edge[1]+((edge[5]-edge[1])/2));
+
+                        //matrix.setValues(ft);
+                        matrix.postTranslate(-(edgeEnd[0]+((edgeEnd[2]-edgeEnd[0])/2)), -(edgeEnd[1]+((edgeEnd[5]-edgeEnd[1])/2)));
+                        matrix.postScale(1f+(-diffScale*t), 1f+(-diffScale*t),0,0);
+                        matrix.postRotate(-diffAngle*t,0,0);
+                        matrix.postTranslate((edge[0]+((edge[2]-edge[0])/2))+(diffcX/25),(edge[1]+((edge[5]-edge[1])/2))+(diffcY/25));
+                        //matrix.postTranslate((diffX*t), (diffY*t));
+
+                        /*matrix.getValues(ft);
+
+                        ft[Matrix.MTRANS_X] = value2[Matrix.MTRANS_X] + (diffX*t) ;
                         ft[Matrix.MTRANS_Y] = value2[Matrix.MTRANS_Y] + (diffY*t);
-                        matrix.setValues(ft);
-                        //matrix.postTranslate(diffX*t, diffY*t);
+                        matrix.setValues(ft);*/
+                        //matrix.postTranslate((diffX*t), (diffY*t));
 
                         imageView.setImageMatrix(matrix);
                         imageView.invalidate();
+                        i++;
+                        Log.d("edge",i+"");
                         if (t < 1f) {
                             imageView.post(this);
                         }else{
