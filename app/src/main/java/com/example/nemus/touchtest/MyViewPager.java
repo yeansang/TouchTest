@@ -36,7 +36,4 @@ public class MyViewPager extends ViewPager {
         return false;
     }
 
-    public void setPagingEnabled(boolean pagingEnabled) {
-        isPagingEnabled = pagingEnabled;
-    }
 }

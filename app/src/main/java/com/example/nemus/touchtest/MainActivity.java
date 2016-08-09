@@ -82,14 +82,6 @@ public class MainActivity extends AppCompatActivity {
                     0f, 0f, 1f, 0f, 0,
                     0f, 0f, 0f, 1, 0};
 
-/*
-    private final Runnable mHidePart2Runnable = new Runnable() {
-        @SuppressLint("InlinedApi")
-        @Override
-        public void run() {
-
-        }
-    };*/
     private final Runnable mShowPart2Runnable = new Runnable() {
         @Override
         public void run() {
@@ -156,8 +148,6 @@ public class MainActivity extends AppCompatActivity {
             int currentPos = 0;
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-                //Log.d("Scroll", position+"/"+positionOffset+"/"+positionOffsetPixels);
-                //Log.d("Scroll", beforePos - currentPos+"");
                 currentPos = position;
                 Log.d("roll", position+"/"+positionOffset+"/"+positionOffsetPixels);
 
@@ -167,13 +157,10 @@ public class MainActivity extends AppCompatActivity {
             public void onPageSelected(int pos) {
                 beforePos = pos;
                 mUpView.setText(pa.getPageTitle(pos));
-                //mDownView.setText((pos+1)+"/"+pa.getCount());
-
             }
 
             @Override
             public void onPageScrollStateChanged(int state) {
-
             }
         });
 
@@ -227,10 +214,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-
-        // Trigger the initial hide() shortly after the activity has been
-        // created, to briefly hint to the user that UI controls
-        // are available.
         delayedHide(100);
     }
 
@@ -248,12 +231,9 @@ public class MainActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.hide();
         }
-        //mControlsView.setVisibility(View.GONE);
         mVisible = false;
 
-        // Schedule a runnable to remove the status and navigation bar after a delay
         mHideHandler.removeCallbacks(mShowPart2Runnable);
-        //mHideHandler.postDelayed(mHidePart2Runnable, UI_ANIMATION_DELAY);
 
         mUpView.animate().alpha(0.0f).setDuration(500);
 
@@ -264,8 +244,6 @@ public class MainActivity extends AppCompatActivity {
         // Show the system bar
         mVisible = true;
 
-        // Schedule a runnable to display UI elements after a delay
-        //mHideHandler.removeCallbacks(mHidePart2Runnable);
         mHideHandler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY);
 
         mUpView.setVisibility(View.VISIBLE);
