@@ -1,7 +1,6 @@
 package com.example.nemus.touchtest;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.RectF;
@@ -10,7 +9,6 @@ import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewParent;
@@ -77,13 +75,6 @@ public class PicView extends ImageView implements View.OnTouchListener {
 
     public PicView(Context context) {
         super(context);
-        this.setOnTouchListener(this);
-        ViewParent vp = getParent();
-        if (vp instanceof ViewPager) {
-            mViewPager = (ViewPager) vp;
-        } else {
-            mViewPager = new ViewPager(null);
-        }
     }
 
     public PicView(Context context, AttributeSet attrs) {
@@ -92,6 +83,14 @@ public class PicView extends ImageView implements View.OnTouchListener {
 
     public PicView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+    }
+
+    public void setup(){
+        this.setOnTouchListener(this);
+    }
+
+    public void setOrigin(){
+        this.setImageMatrix(originMatrix);
     }
 
     @Override
@@ -105,39 +104,49 @@ public class PicView extends ImageView implements View.OnTouchListener {
 
         float[] edge = matrixEdges(view, null);
 
-        Log.d("action", event.getAction() + "");
+        if(toggle){
+            float[] value = new float[9];
+            matrix.getValues(value);
+            originMatrix.setValues(value);
+            ViewParent vp = getParent();
+            Log.d("parent",vp.getClass().getSimpleName());
+            if (vp instanceof ViewPager) {
+                mViewPager = (ViewPager) vp;
+            } else {
+                mViewPager = new ViewPager(getContext());
+            }
+            toggle = false;
+        }
+
+        Log.d("action", event.getAction()+"");
         mViewPager.beginFakeDrag();
 
-        float xmas = madMax(edge[0], edge[2], edge[4], edge[6]);
-        float xmin = madMin(edge[0], edge[2], edge[4], edge[6]);
+        float xmas = madMax(edge[0],edge[2],edge[4],edge[6]);
+        float xmin = madMin(edge[0],edge[2],edge[4],edge[6]);
         float xsize = view.getWidth();
+
 
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:
-                if (toggle) {
-                    float[] value = new float[9];
-                    matrix.getValues(value);
-                    originMatrix.setValues(value);
-                    toggle = false;
-                }
 
                 rightEdge = event.getRawX() - (xmas - xsize);
                 leftEdge = event.getRawX() - xmin;
 
-                Log.d("Scrollpoint", rightEdge + "/" + leftEdge);
-
-                Log.d("switch", "1");
                 savedMatrix.set(matrix);
+
+                Log.d("Scrollpoint",rightEdge+"/"+leftEdge);
+                Log.d("switch","1");
+
                 start.set(event.getX(), event.getY());
                 mode = DRAG;
                 break;
             case MotionEvent.ACTION_POINTER_DOWN:
-                Log.d("switch", "2");
+                Log.d("switch","2");
                 oldDist = spacing(event);
                 if (oldDist > 10f) {
                     savedMatrix.set(matrix);
-                    midPoint(mid, event, view);
-                    midPoint(midStart, event, view);
+                    midPoint(mid,event,view);
+                    midPoint(midStart,event, view);
                     mode = ZOOM;
                 }
                 d = rotation(event);
@@ -149,12 +158,10 @@ public class PicView extends ImageView implements View.OnTouchListener {
                 dxCal = true;
                 break;
             case MotionEvent.ACTION_POINTER_UP:
-                Log.d("switch", "3");
-                //mode = NONE;
-                Log.d("point", event.getPointerCount() + "");
+                Log.d("switch","3");
+                Log.d("point", event.getPointerCount()+"");
 
-                if (event.getPointerCount() == 2) {
-                    //event.
+                if(event.getPointerCount()==2){
                     start.set(event.getX(), event.getY());
                     mode = DRAG;
                 }
@@ -178,34 +185,34 @@ public class PicView extends ImageView implements View.OnTouchListener {
                         dxCal = false;
                     }
 
-
                     if ((rightEdge > event.getRawX())) {
-                        if ((0 < xmin) && (xmas < xsize)) {
+                        if((0<xmin)&&(xmas<xsize)){
                             scrollMode = 3;
-                        } else {
+                        }else {
                             scrollMode = 1;
                         }
                     }
                     if ((leftEdge < event.getRawX())) {
-                        if ((0 < xmin) && (xmas < xsize)) {
-                            scrollMode = 3;
-                        } else {
+                        if((0<xmin)&&(xmas<xsize)){
+                            scrollMode =3;
+                        }else {
                             scrollMode = 2;
                         }
                     }
-                    if ((0 > xmin) && (xmas < xsize)) {
-                        Log.d("Scrollpoint", "right");
-                        scrollMode = 4;
+                    if((0>xmin)&&(xmas<xsize)){
+                        Log.d("Scrollpoint","right");
+                        if(dx<0) scrollMode = 3;
+                        else scrollMode = 4;
                     }
-                    if ((0 < xmin) && (xmas > xsize)) {
-                        Log.d("Scrollpoint", "left");
-                        scrollMode = 4;
+                    if((0<xmin)&&(xmas>xsize)){
+                        Log.d("Scrollpoint","left");
+                        if(dx>0) scrollMode = 3;
+                        else scrollMode = 4;
                     }
 
+                    Log.d("Scrollpoint", scrollMode+"");
 
-                    Log.d("Scrollpoint", scrollMode + "");
-
-                    switch (scrollMode) {
+                    switch(scrollMode){
                         case 1: {
                             float ddx = xsize - xmas;
                             matrix.postTranslate(ddx, 0);
@@ -218,7 +225,7 @@ public class PicView extends ImageView implements View.OnTouchListener {
                             mViewPager.fakeDragBy(dx);
                         }
                         break;
-                        case 3: {
+                        case 3:{
                             mViewPager.fakeDragBy(dx);
                         }
                         break;
@@ -234,27 +241,27 @@ public class PicView extends ImageView implements View.OnTouchListener {
 
                     float mdx = midStart.x - mid.x;
                     float mdy = midStart.y - mid.y;
-                    Log.d("md", mid.x + "/" + mid.y);
-                    Log.d("switch", "5");
+                    Log.d("md",mid.x+"/"+mid.y);
+                    Log.d("switch","5");
 
                     float newDist = spacing(event);
                     if (newDist > 10f) {
-                        Log.d("switch", "6");
+                        Log.d("switch","6");
                         matrix.set(savedMatrix);
                         float scale = (newDist / oldDist);
 
-                        Log.d("switch", "7");
+                        Log.d("switch","7");
                         newRot = rotation(event);
                         float r = newRot - d;
 
                         float ft[] = new float[9];
                         originMatrix.getValues(ft);
 
-                        matrix.postScale(scale, scale, mid.x, mid.y);
+                        matrix.postScale(scale, scale,mid.x, mid.y);
                         matrix.postRotate(r, mid.x, mid.y);
-                        matrix.postTranslate(mdx, mdy);
-                        Log.d("mid", mid.x + "/" + mid.y);
-                        midPoint(midStart, event, view);
+                        matrix.postTranslate(mdx,mdy);
+                        Log.d("mid",mid.x+"/"+mid.y);
+                        midPoint(midStart,event, view);
                     }
                 }
                 break;
@@ -353,11 +360,9 @@ public class PicView extends ImageView implements View.OnTouchListener {
 
     class CustomDoubletap implements GestureDetector.OnDoubleTapListener {
         ImageView imageView;
-        int[] loc = new int[]{0, 0};
 
         CustomDoubletap(View view) {
             this.imageView = (ImageView) view;
-            view.getLocationOnScreen(loc);
         }
 
 
@@ -374,6 +379,7 @@ public class PicView extends ImageView implements View.OnTouchListener {
             final float[] value1 = new float[9];
             final float[] value2 = new float[9];
             matrix.getValues(value2);
+
             if (zoomToggle) {
                 originMatrix.getValues(value1);
                 zoomToggle = false;
@@ -384,6 +390,12 @@ public class PicView extends ImageView implements View.OnTouchListener {
                 matrix.setValues(value2);
                 zoomToggle = true;
             }
+
+            Matrix temp = new Matrix();
+            temp.setValues(value1);
+
+            float nowPoint[] = matrixEdges(imageView,null);
+            float origPoint[] = matrixEdges(imageView,temp);
 
             // calculate real scale
             float scalex = value2[Matrix.MSCALE_X];
@@ -398,17 +410,10 @@ public class PicView extends ImageView implements View.OnTouchListener {
             float origScale = (float) Math.sqrt(value1[Matrix.MSCALE_X] * value1[Matrix.MSCALE_X] + value1[Matrix.MSKEW_Y] * value1[Matrix.MSKEW_Y]);
             float origAngle = 0;
 
-            final float diffX = value1[Matrix.MTRANS_X] - value2[Matrix.MTRANS_X];
-            final float diffY = value1[Matrix.MTRANS_Y] - value2[Matrix.MTRANS_Y];
-            final float diffScale = 1f - (origScale / mScale);
+            final float diffcX = (origPoint[0]+((origPoint[2]-origPoint[0])/2)) - (nowPoint[0]+((nowPoint[2]-nowPoint[0])/2));
+            final float diffcY = (origPoint[1]+((origPoint[5]-origPoint[1])/2)) - (nowPoint[1]+((nowPoint[5]-nowPoint[1])/2));
+            final float diffScale = 1f-(origScale/mScale);
             final float diffAngle = origAngle - mAngle;
-
-            Log.d("doubletap", diffX + "/" + diffY);
-            Log.d("doubletap", diffScale + "/" + diffAngle);
-            Log.d("doubletap", "===================");
-
-            //matrix.postScale(diffScale, diffScale,500,500);
-            //matrix.postTranslate(diffX,diffY);
 
             imageView.post(new Runnable() {
                 @Override
@@ -416,22 +421,24 @@ public class PicView extends ImageView implements View.OnTouchListener {
                     float t = (float) (System.currentTimeMillis() - startTime) / duration;
                     t = t > 1.0f ? 1.0f : t;
                     Log.d("double", t + "");
-                    matrix.setValues(value2);
 
-                    matrix.postScale(1f + (-diffScale * t), 1f + (-diffScale * t), imageView.getWidth() / 2, imageView.getHeight() / 2);
-                    matrix.postRotate(-diffAngle * t, imageView.getWidth() / 2, imageView.getHeight() / 2);
                     float[] ft = new float[9];
+
+                    float[] edge = matrixEdges(imageView,matrix);
+                    matrix.setValues(value2);
+                    float[] edgeEnd = matrixEdges(imageView,matrix);
                     matrix.getValues(ft);
-                    ft[Matrix.MTRANS_X] = value2[Matrix.MTRANS_X] + (diffX * t);
-                    ft[Matrix.MTRANS_Y] = value2[Matrix.MTRANS_Y] + (diffY * t);
-                    matrix.setValues(ft);
-                    //matrix.postTranslate(diffX*t, diffY*t);
+
+                    matrix.postTranslate(-(edgeEnd[0]+((edgeEnd[2]-edgeEnd[0])/2)), -(edgeEnd[1]+((edgeEnd[5]-edgeEnd[1])/2)));
+                    matrix.postScale(1f+(-diffScale*t), 1f+(-diffScale*t),0,0);
+                    matrix.postRotate(-diffAngle*t,0,0);
+                    matrix.postTranslate((edge[0]+((edge[2]-edge[0])/2))+(diffcX/25),(edge[1]+((edge[5]-edge[1])/2))+(diffcY/25));
 
                     imageView.setImageMatrix(matrix);
                     imageView.invalidate();
                     if (t < 1f) {
                         imageView.post(this);
-                    } else {
+                    }else{
                         matrix.setValues(value1);
                         imageView.setImageMatrix(matrix);
                         imageView.invalidate();

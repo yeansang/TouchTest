@@ -157,6 +157,18 @@ public class MainActivity extends AppCompatActivity {
             public void onPageSelected(int pos) {
                 beforePos = pos;
                 mUpView.setText(pa.getPageTitle(pos));
+                if((pos==0)) {
+                    PicView pv = (PicView) mViewPager.findViewWithTag(pos+1);
+                    if(pv!=null) pv.setOrigin();
+                }else if((pos==(pa.getCount()-1))){
+                    PicView pv = (PicView) mViewPager.findViewWithTag(pos-1);
+                    if(pv!=null) pv.setOrigin();
+                }else{
+                    PicView pv = (PicView) mViewPager.findViewWithTag(pos-1);
+                    if(pv!=null) pv.setOrigin();
+                    pv = (PicView) mViewPager.findViewWithTag(pos+1);
+                    if(pv!=null) pv.setOrigin();
+                }
             }
 
             @Override
