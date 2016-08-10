@@ -62,7 +62,7 @@ public class ImageAdator extends PagerAdapter {
 
         View view = inflater.inflate(R.layout.pager_imageview,null);
 
-        final ImageView imageView = (ImageView)view.findViewById(R.id.imageview);
+        final PicView imageView = (PicView)view.findViewById(R.id.imageview);
         view.setTag(position);
         if(inside){
             imageView.setImageBitmap(inview);
@@ -123,7 +123,10 @@ public class ImageAdator extends PagerAdapter {
                         }
 
                         rightEdge = event.getRawX() - (xmas - xsize);
-                        leftEdge = event.getRawX() + (-xmin);
+                        leftEdge = event.getRawX() - xmin;
+                        /*if(rightEdge>leftEdge){
+                            rightEdge = leftEdge = event.getRawX();
+                        }*/
 
                         Log.d("Scrollpoint",rightEdge+"/"+leftEdge);
 
@@ -151,7 +154,14 @@ public class ImageAdator extends PagerAdapter {
                         break;
                     case MotionEvent.ACTION_POINTER_UP:
                         Log.d("switch","3");
-                        mode = NONE;
+                        //mode = NONE;
+                        Log.d("point", event.getPointerCount()+"");
+
+                        if(event.getPointerCount()==2){
+                            //event.
+                            start.set(event.getX(), event.getY());
+                            mode = DRAG;
+                        }
                         main.mViewPager.endFakeDrag();
                         dxCal = true;
                         break;
@@ -172,35 +182,43 @@ public class ImageAdator extends PagerAdapter {
                                 dxCal = false;
                             }
 
-                            if((rightEdge<event.getRawX())&&(event.getRawX()<leftEdge)){
-                                scrollMode = 0;
-                            }else{
-                                if((xmin>0)&&(xmas<xsize)){
+
+                            if ((rightEdge > event.getRawX())) {
+                                if((0<xmin)&&(xmas<xsize)){
                                     scrollMode = 3;
                                 }else {
-                                    if ((rightEdge > event.getRawX())) {
-                                        float ddx = xsize - xmas;
-                                        matrix.postTranslate(ddx, 0);
-                                        scrollMode = 1;
-                                    }
-                                    if ((leftEdge < event.getRawX())) {
-                                        float ddx = 0 - xmin;
-                                        matrix.postTranslate(ddx, 0);
-                                        scrollMode = 1;
-                                    }
+                                    scrollMode = 1;
                                 }
                             }
+                            if ((leftEdge < event.getRawX())) {
+                                if((0<xmin)&&(xmas<xsize)){
+                                    scrollMode =3;
+                                }else {
+                                    scrollMode = 2;
+                                }
+                            }
+                            if((0>xmin)&&(xmas<xsize)){
+                                Log.d("Scrollpoint","right");
+                                scrollMode = 4;
+                            }
+                            if((0<xmin)&&(xmas>xsize)){
+                                Log.d("Scrollpoint","left");
+                                scrollMode = 4;
+                            }
+
+
+                            Log.d("Scrollpoint", scrollMode+"");
 
                             switch(scrollMode){
                                 case 1: {
-                                    float ft[] = new float[9];
-                                    matrix.getValues(ft);
+                                    float ddx = xsize - xmas;
+                                    matrix.postTranslate(ddx, 0);
                                     main.mViewPager.fakeDragBy(dx);
                                 }
                                     break;
                                 case 2: {
-                                    float ft[] = new float[9];
-                                    matrix.getValues(ft);
+                                    float ddx = 0 - xmin;
+                                    matrix.postTranslate(ddx, 0);
                                     main.mViewPager.fakeDragBy(dx);
                                 }
                                     break;
@@ -260,9 +278,13 @@ public class ImageAdator extends PagerAdapter {
             }
 
             private float spacing(MotionEvent event) {
-                float x = event.getX(0) - event.getX(1);
-                float y = event.getY(0) - event.getY(1);
-                return (float)Math.sqrt(x * x + y * y);
+                if(event.getPointerCount()>=2) {
+                    float x = event.getX(0) - event.getX(1);
+                    float y = event.getY(0) - event.getY(1);
+                    return (float) Math.sqrt(x * x + y * y);
+                }else{
+                    return 0f;
+                }
             }
 
             /**
