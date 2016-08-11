@@ -21,7 +21,7 @@ public class PicView extends ImageView implements View.OnTouchListener {
 
     private boolean zoomToggle = false;
     private boolean toggle = true;
-    private boolean multiToggle = false;
+    private boolean dragToggle = false;
     boolean dxCal = true;
 
     private Matrix matrix = new Matrix();
@@ -144,15 +144,19 @@ public class PicView extends ImageView implements View.OnTouchListener {
                 mode = DRAG;
                 break;
             case MotionEvent.ACTION_POINTER_DOWN:
-                Log.d("switch","2");
-                oldDist = spacing(event);
-                if (oldDist > 10f) {
-                    savedMatrix.set(matrix);
-                    midPoint(mid,event,view);
-                    midPoint(midStart,event, view);
-                    mode = ZOOM;
+                if(dragToggle&&zoomToggle) {
+                    mode = DRAG;
+                }else {
+                    Log.d("switch", "2");
+                    oldDist = spacing(event);
+                    if (oldDist > 10f) {
+                        savedMatrix.set(matrix);
+                        midPoint(mid, event, view);
+                        midPoint(midStart, event, view);
+                        mode = ZOOM;
+                    }
+                    d = rotation(event);
                 }
-                d = rotation(event);
                 break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
@@ -165,7 +169,8 @@ public class PicView extends ImageView implements View.OnTouchListener {
                 Log.d("point", event.getPointerCount()+"");
 
                 if(event.getPointerCount()==2){
-                    if(((event.getAction()&MotionEvent.ACTION_POINTER_INDEX_MASK)>>MotionEvent.ACTION_POINTER_INDEX_SHIFT) == 0){
+                    if(dragToggle) {
+                    }else if(((event.getAction()&MotionEvent.ACTION_POINTER_INDEX_MASK)>>MotionEvent.ACTION_POINTER_INDEX_SHIFT) == 0){
                         Log.d("point2", "false");
                         start.set(event.getX(1), event.getY(1));
                         rightEdge = event.getRawX() - (xmas - xsize);
@@ -182,7 +187,6 @@ public class PicView extends ImageView implements View.OnTouchListener {
                     //multiToggle = true;
                     mode = DRAG;
                 }
-                mViewPager.endFakeDrag();
                 dxCal = true;
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -208,9 +212,6 @@ public class PicView extends ImageView implements View.OnTouchListener {
                                 scrollMode = 3;
                             }else if(event.getRawX()<startDrag){
                                 scrollMode = 1;
-                                if(dx<0){
-                                    scrollMode=3;
-                                }
                             }else {
                                 scrollMode = 1;
                             }
@@ -220,9 +221,6 @@ public class PicView extends ImageView implements View.OnTouchListener {
                                 scrollMode = 3;
                             } else if(event.getRawX()>startDrag){
                                 scrollMode = 2;
-                                if(dx<0){
-                                    scrollMode=3;
-                                }
                             }else{
                                 scrollMode = 2;
                             }
@@ -243,29 +241,33 @@ public class PicView extends ImageView implements View.OnTouchListener {
                         switch (scrollMode) {
                             case 1: {
                                 float ddx = xsize - xmas;
-                                matrix.postTranslate(ddx, dy);
+                                matrix.postTranslate(ddx, 0);
                                 mViewPager.fakeDragBy(dx);
+                                dragToggle = true;
                             }
                             break;
                             case 2: {
                                 float ddx = 0 - xmin;
-                                matrix.postTranslate(ddx, dy);
+                                matrix.postTranslate(ddx, 0);
                                 mViewPager.fakeDragBy(dx);
+                                dragToggle = true;
                             }
                             break;
                             case 3: {
                                 mViewPager.fakeDragBy(dx);
+                                dragToggle = true;
                             }
                             break;
                             case 4:
                             default:
-                                //mViewPager.endFakeDrag();
+                                mViewPager.endFakeDrag();
                                 matrix.postTranslate(dx, dy);
                                 dxCal = true;
+                                dragToggle = false;
                                 break;
                         }
                     }
-                    if (mode == ZOOM) {
+                    if ((mode == ZOOM)) {
                         zoomToggle = true;
 
                         float mdx = midStart.x - mid.x;
