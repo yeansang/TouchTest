@@ -21,6 +21,7 @@ public class PicView extends ImageView implements View.OnTouchListener {
 
     private boolean zoomToggle = false;
     private boolean toggle = true;
+    private boolean multiToggle = false;
     boolean dxCal = true;
 
     private Matrix matrix = new Matrix();
@@ -125,6 +126,8 @@ public class PicView extends ImageView implements View.OnTouchListener {
         float xmin = madMin(edge[0],edge[2],edge[4],edge[6]);
         float xsize = view.getWidth();
 
+        Log.d("point", ((event.getAction()&MotionEvent.ACTION_POINTER_INDEX_MASK)>>MotionEvent.ACTION_POINTER_INDEX_SHIFT)+"");
+
 
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:
@@ -162,7 +165,21 @@ public class PicView extends ImageView implements View.OnTouchListener {
                 Log.d("point", event.getPointerCount()+"");
 
                 if(event.getPointerCount()==2){
-                    start.set(event.getX(), event.getY());
+                    if(((event.getAction()&MotionEvent.ACTION_POINTER_INDEX_MASK)>>MotionEvent.ACTION_POINTER_INDEX_SHIFT) == 0){
+                        Log.d("point2", "false");
+                        start.set(event.getX(1), event.getY(1));
+                        rightEdge = event.getRawX() - (xmas - xsize);
+                        leftEdge = event.getRawX() - xmin;
+                    }else{
+                        Log.d("point2","true");
+                        start.set(event.getX(), event.getY());
+                        rightEdge = event.getRawX() - (xmas - xsize);
+                        leftEdge = event.getRawX() - xmin;
+                    }
+                    /*float upX = start.x - event.getX(((event.getAction()&MotionEvent.ACTION_POINTER_INDEX_MASK)>>MotionEvent.ACTION_POINTER_INDEX_SHIFT));
+                    float upY = start.y - event.getY(((event.getAction()&MotionEvent.ACTION_POINTER_INDEX_MASK)>>MotionEvent.ACTION_POINTER_INDEX_SHIFT));
+                    */
+                    //multiToggle = true;
                     mode = DRAG;
                 }
                 mViewPager.endFakeDrag();
@@ -171,100 +188,113 @@ public class PicView extends ImageView implements View.OnTouchListener {
             case MotionEvent.ACTION_MOVE:
                 float[] value = new float[9];
                 matrix.getValues(value);
-                if (mode == DRAG) {
+                if(((event.getAction()&MotionEvent.ACTION_POINTER_INDEX_MASK)>>MotionEvent.ACTION_POINTER_INDEX_SHIFT)<2) {
+                    if (mode == DRAG) {
 
-                    float dx = event.getRawX() - start.x;
-                    start.x = event.getRawX();
-                    float dy = event.getY() - start.y;
-                    start.y = event.getY();
+                        float dx = event.getRawX() - start.x;
+                        start.x = event.getRawX();
+                        float dy = event.getY() - start.y;
+                        start.y = event.getY();
 
-                    int scrollMode = 0;
+                        int scrollMode = 0;
 
-                    if (dxCal) {
-                        startDrag = event.getX();
-                        dxCal = false;
-                    }
-
-                    if ((rightEdge > event.getRawX())) {
-                        if((0<xmin)&&(xmas<xsize)){
-                            scrollMode = 3;
-                        }else {
-                            scrollMode = 1;
+                        if (dxCal) {
+                            startDrag = event.getX();
+                            dxCal = false;
                         }
-                    }
-                    if ((leftEdge < event.getRawX())) {
-                        if((0<xmin)&&(xmas<xsize)){
-                            scrollMode =3;
-                        }else {
-                            scrollMode = 2;
-                        }
-                    }
-                    if((0>xmin)&&(xmas<xsize)){
-                        Log.d("Scrollpoint","right");
-                        if(dx<0) scrollMode = 3;
-                        else scrollMode = 4;
-                    }
-                    if((0<xmin)&&(xmas>xsize)){
-                        Log.d("Scrollpoint","left");
-                        if(dx>0) scrollMode = 3;
-                        else scrollMode = 4;
-                    }
 
-                    Log.d("Scrollpoint", scrollMode+"");
+                        if ((rightEdge > event.getRawX())) {
+                            if ((0 < xmin) && (xmas < xsize)) {
+                                scrollMode = 3;
+                            }else if(event.getRawX()<startDrag){
+                                scrollMode = 1;
+                                if(dx<0){
+                                    scrollMode=3;
+                                }
+                            }else {
+                                scrollMode = 1;
+                            }
+                        }
+                        if ((leftEdge < event.getRawX())) {
+                            if ((0 < xmin) && (xmas < xsize)) {
+                                scrollMode = 3;
+                            } else if(event.getRawX()>startDrag){
+                                scrollMode = 2;
+                                if(dx<0){
+                                    scrollMode=3;
+                                }
+                            }else{
+                                scrollMode = 2;
+                            }
+                        }
+                        if ((0 > xmin) && (xmas < xsize)) {
+                            Log.d("Scrollpoint", "right");
+                            if (dx < 0) scrollMode = 3;
+                            else scrollMode = 4;
+                        }
+                        if ((0 < xmin) && (xmas > xsize)) {
+                            Log.d("Scrollpoint", "left");
+                            if (dx > 0) scrollMode = 3;
+                            else scrollMode = 4;
+                        }
 
-                    switch(scrollMode){
-                        case 1: {
-                            float ddx = xsize - xmas;
-                            matrix.postTranslate(ddx, 0);
-                            mViewPager.fakeDragBy(dx);
-                        }
-                        break;
-                        case 2: {
-                            float ddx = 0 - xmin;
-                            matrix.postTranslate(ddx, 0);
-                            mViewPager.fakeDragBy(dx);
-                        }
-                        break;
-                        case 3:{
-                            mViewPager.fakeDragBy(dx);
-                        }
-                        break;
-                        case 4:
-                        default:
-                            mViewPager.endFakeDrag();
-                            matrix.postTranslate(dx, dy);
-                            dxCal = true;
+                        Log.d("Scrollpoint", scrollMode + "");
+
+                        switch (scrollMode) {
+                            case 1: {
+                                float ddx = xsize - xmas;
+                                matrix.postTranslate(ddx, dy);
+                                mViewPager.fakeDragBy(dx);
+                            }
                             break;
+                            case 2: {
+                                float ddx = 0 - xmin;
+                                matrix.postTranslate(ddx, dy);
+                                mViewPager.fakeDragBy(dx);
+                            }
+                            break;
+                            case 3: {
+                                mViewPager.fakeDragBy(dx);
+                            }
+                            break;
+                            case 4:
+                            default:
+                                //mViewPager.endFakeDrag();
+                                matrix.postTranslate(dx, dy);
+                                dxCal = true;
+                                break;
+                        }
                     }
-                } else if (mode == ZOOM) {
-                    zoomToggle = true;
+                    if (mode == ZOOM) {
+                        zoomToggle = true;
 
-                    float mdx = midStart.x - mid.x;
-                    float mdy = midStart.y - mid.y;
-                    Log.d("md",mid.x+"/"+mid.y);
-                    Log.d("switch","5");
+                        float mdx = midStart.x - mid.x;
+                        float mdy = midStart.y - mid.y;
+                        Log.d("md", mid.x + "/" + mid.y);
+                        Log.d("switch", "5");
 
-                    float newDist = spacing(event);
-                    if (newDist > 10f) {
-                        Log.d("switch","6");
-                        matrix.set(savedMatrix);
-                        float scale = (newDist / oldDist);
+                        float newDist = spacing(event);
+                        if (newDist > 10f) {
+                            Log.d("switch", "6");
+                            matrix.set(savedMatrix);
+                            float scale = (newDist / oldDist);
 
-                        Log.d("switch","7");
-                        newRot = rotation(event);
-                        float r = newRot - d;
+                            Log.d("switch", "7");
+                            newRot = rotation(event);
+                            float r = newRot - d;
 
-                        float ft[] = new float[9];
-                        originMatrix.getValues(ft);
+                            float ft[] = new float[9];
+                            originMatrix.getValues(ft);
 
-                        matrix.postScale(scale, scale,mid.x, mid.y);
-                        matrix.postRotate(r, mid.x, mid.y);
-                        matrix.postTranslate(mdx,mdy);
-                        Log.d("mid",mid.x+"/"+mid.y);
-                        midPoint(midStart,event, view);
+                            matrix.postScale(scale, scale, mid.x, mid.y);
+                            matrix.postRotate(r, mid.x, mid.y);
+                            matrix.postTranslate(mdx, mdy);
+                            Log.d("mid", mid.x + "/" + mid.y);
+                            midPoint(midStart, event, view);
+                        }
                     }
                 }
-                break;
+                    break;
         }
 
         view.setImageMatrix(matrix);
