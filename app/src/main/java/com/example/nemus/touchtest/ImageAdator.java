@@ -75,7 +75,7 @@ public class ImageAdator extends PagerAdapter {
     @Override
     public int getCount() {
         if(inside) return 1;
-        return 5;
+        return 3;
     }
 
     @Override

@@ -44,9 +44,9 @@ public class MainActivity extends AppCompatActivity {
      */
     private static final int UI_ANIMATION_DELAY = 300;
     private final Handler mHideHandler = new Handler();
-    Button nomalButton;
+    /*Button nomalButton;
     Button rgButton;
-    Button gButton;
+    Button gButton;*/
     Button bButton;
     TextView mUpView;
     MyViewPager mViewPager;
@@ -70,10 +70,10 @@ public class MainActivity extends AppCompatActivity {
 
     float[] mat3 = new float[] //fix
             {
-                    1f, 0f, 0f, 0f, 0,
-                    0.3f, 0.2f, 0, 0, 0,
-                    0f, 0, 1f, 0, 0,
-                    0f, 0f, 0f, 1, 0};
+                    0.6f, 0.2f, 0.2f, 0f, 0,
+                    0f, 1f, 0, 0, 0,
+                    0.2f, 0.2f, 0.6f, 0, 0,
+                    0f, 0f, 0f, 1.2f, 0};
 
     float[] mat4 = new float[] //normal
             {
@@ -124,10 +124,10 @@ public class MainActivity extends AppCompatActivity {
 
         mUpView = (TextView) findViewById(R.id.titleText);
         mViewPager = (MyViewPager) findViewById(R.id.viewPager);
-        rgButton = (Button)findViewById(R.id.button3);
-        nomalButton = (Button)findViewById(R.id.button4);
+        //rgButton = (Button)findViewById(R.id.button3);
+        //nomalButton = (Button)findViewById(R.id.button4);
         bButton = (Button)findViewById(R.id.button);
-        gButton = (Button)findViewById(R.id.button2);
+        //gButton = (Button)findViewById(R.id.button2);
 
         Intent intent = getIntent();
         String action = intent.getAction();
@@ -178,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-        nomalButton.setOnClickListener(new View.OnClickListener() {
+        /*nomalButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 imageView = (ImageView)mViewPager.findViewWithTag(mViewPager.getCurrentItem());
@@ -203,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
                 ColorMatrixColorFilter cf = new ColorMatrixColorFilter(mat2);
                 imageView.setColorFilter(cf);
             }
-        });
+        });*/
 
         bButton.setOnClickListener(new View.OnClickListener() {
             @Override
